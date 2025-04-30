@@ -1,0 +1,93 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    #0066cc 0%,
+    #0066cc 60%,
+    #4d94ff 100%
+  );
+  padding: 2rem;
+  position: relative;
+}
+
+.content {
+  max-width: 800px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 3rem;
+  color: white;
+  margin: 0;
+}
+
+.wavingHand {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.text {
+  color: white;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.link {
+  color: white;
+  text-decoration: underline;
+  font-size: 1.2rem;
+  transition: opacity 0.3s ease;
+}
+
+.link:hover {
+  opacity: 0.8;
+}
+
+.profileImage {
+  border-radius: 50%;
+  margin-bottom: 2rem;
+  border: 4px solid white;
+}
+
+.backLink {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.backLink:hover {
+  transform: translateX(-5px);
+}
+
+.arrow {
+  font-size: 1.5rem;
+}
+
+.navigation {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+} 

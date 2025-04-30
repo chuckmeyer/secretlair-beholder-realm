@@ -1,0 +1,81 @@
+.gameArea {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.beholder {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  animation: float 6s ease-in-out infinite;
+}
+
+.shadow {
+  position: absolute;
+  width: 250px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  left: 50%;
+  top: 80%;  /* Moved from 65% to 80% to position it lower */
+  transform: translateX(-50%);
+  filter: blur(8px);
+  animation: shadowFloat 6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.beholder img {
+  width: 300px;
+  height: 300px;
+  object-fit: contain;
+  /* Remove any image smoothing to keep the pixel art crisp */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+@keyframes float {
+  0% {
+    transform: translate(-50%, -50%);
+  }
+  25% {
+    transform: translate(-53%, -58%);
+  }
+  50% {
+    transform: translate(-50%, -65%);
+  }
+  75% {
+    transform: translate(-47%, -58%);
+  }
+  100% {
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes shadowFloat {
+  0% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.4;
+  }
+  25% {
+    transform: translateX(-50%) scale(0.85);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(-50%) scale(0.7);
+    opacity: 0.2;
+  }
+  75% {
+    transform: translateX(-50%) scale(0.85);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.4;
+  }
+} 
