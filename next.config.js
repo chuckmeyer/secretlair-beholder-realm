@@ -1,18 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'avatars.githubusercontent.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'media.giphy.com',
-        pathname: '/**',
-      }
+      },
     ],
+    unoptimized: true, // This allows us to use local images without optimization
   },
 }
 

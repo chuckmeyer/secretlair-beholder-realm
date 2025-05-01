@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
+import Image from 'next/image'
 import styles from './Game.module.css'
-import FogBackground from './FogBackground'
 
 // Define eye stalk positions but let angles be calculated
 const EYE_STALKS = [
@@ -13,50 +13,45 @@ const EYE_STALKS = [
   { top: '42%', left: '25%', color: '#00ffff' },    // Cyan, left
 ];
 
-// Calculate target point (bottom center)
-const TARGET_POINT = { x: 50, y: 100 };
-
 export default function Game() {
   const gameAreaRef = useRef<HTMLDivElement>(null)
   const beholderRef = useRef<HTMLDivElement>(null)
-  const [isWarningFlash, setIsWarningFlash] = useState(false)
-  const [isImpactFlash, setIsImpactFlash] = useState(false)
+  const [isWarningFlash, setIsWarningFlash] = useState<boolean>(false)
   const [activeEyeStalk, setActiveEyeStalk] = useState<typeof EYE_STALKS[0] | null>(null)
-  const [isBeamActive, setIsBeamActive] = useState(false)
+  const [isBeamActive, setIsBeamActive] = useState<boolean>(false)
   const [beamStyle, setBeamStyle] = useState<{ angle: number, length: number } | null>(null)
-  const animationFrameRef = useRef<number>()
-  const [canBlock, setCanBlock] = useState(false)
-  const [blockedCount, setBlockedCount] = useState(0)
-  const [isGameOver, setIsGameOver] = useState(false)
+  const animationFrameRef = useRef<number | undefined>(undefined)
+  const [canBlock, setCanBlock] = useState<boolean>(false)
+  const [blockedCount, setBlockedCount] = useState<number>(0)
+  const [isGameOver, setIsGameOver] = useState<boolean>(false)
 
   // Add refs for our timers
-  const beamTimerRef = useRef<NodeJS.Timeout>()
-  const warningTimerRef = useRef<NodeJS.Timeout>()
-  const impactTimerRef = useRef<NodeJS.Timeout>()
-  const cleanupTimerRef = useRef<NodeJS.Timeout>()
+  const beamTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const warningTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const impactTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const cleanupTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Add new state for tracking if player's shield is active
-  const [isShieldActive, setIsShieldActive] = useState(false)
-  const shieldTimerRef = useRef<NodeJS.Timeout>()
+  const shieldTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Add new state for controlling restart availability
-  const [canRestart, setCanRestart] = useState(false)
+  const [canRestart, setCanRestart] = useState<boolean>(false)
 
   // Add state for tracking if the spacebar is being held down
-  const [isSpacebarDown, setIsSpacebarDown] = useState(false)
+  const [isSpacebarDown, setIsSpacebarDown] = useState<boolean>(false)
 
   // Add state to track animation key
-  const [animationKey, setAnimationKey] = useState(0)
+  const [animationKey, setAnimationKey] = useState<number>(0)
 
   // Add a new state for the visual effect
-  const [isShieldAnimating, setIsShieldAnimating] = useState(false)
+  const [isShieldAnimating, setIsShieldAnimating] = useState<boolean>(false)
 
   // Add state for score animation
-  const [scoreAnimationKey, setScoreAnimationKey] = useState(0)
-  const [isScoreAnimating, setIsScoreAnimating] = useState(false)
+  const [scoreAnimationKey, setScoreAnimationKey] = useState<number>(0)
+  const [isScoreAnimating, setIsScoreAnimating] = useState<boolean>(false)
 
-  // Add new state for frame flash
-  const [frameFlashKey, setFrameFlashKey] = useState(0)
+  // Add state for frame flash
+  const [isFrameFlashing, setIsFrameFlashing] = useState<boolean>(false)
 
   // Clear all timers helper
   const clearAllTimers = useCallback(() => {
@@ -66,12 +61,12 @@ export default function Game() {
     if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current)
     if (shieldTimerRef.current) {
       clearTimeout(shieldTimerRef.current)
-      shieldTimerRef.current = undefined
-      setIsShieldActive(false)  // Ensure shield is deactivated when clearing timers
+      shieldTimerRef.current = null
     }
   }, [])
 
-  const shootBeam = useCallback(() => {
+  // Declare shootBeam and scheduleNextBeam with proper types
+  const shootBeam = useCallback((): void => {
     if (isGameOver) return
 
     const eyeStalk = EYE_STALKS[Math.floor(Math.random() * EYE_STALKS.length)]
@@ -88,16 +83,13 @@ export default function Game() {
       setIsWarningFlash(false)
       setIsBeamActive(true)
       setCanBlock(true)
-      setFrameFlashKey(prev => prev + 1) // Trigger frame flash animation
+      setIsFrameFlashing(true)
       
       // Beam hit check
       impactTimerRef.current = setTimeout(() => {
         setCanBlock(prev => {
           if (prev) { // If still can block, player missed
             setIsGameOver(true)
-            setIsImpactFlash(true)
-            setTimeout(() => setIsImpactFlash(false), 50)
-            // Add delay before allowing restart
             setTimeout(() => {
               setCanRestart(true)
             }, 1000) // Wait 1 second before allowing restart
@@ -112,6 +104,7 @@ export default function Game() {
         setIsBeamActive(false)
         setActiveEyeStalk(null)
         setCanBlock(false)
+        setIsFrameFlashing(false)
         if (!isGameOver) {
           scheduleNextBeam()
         }
@@ -119,7 +112,7 @@ export default function Game() {
     }, 300)
   }, [isGameOver])
 
-  const scheduleNextBeam = useCallback(() => {
+  const scheduleNextBeam = useCallback((): void => {
     if (isGameOver) return
     clearAllTimers() // Clear any existing timers before scheduling new one
     const delay = Math.random() * 8000 + 2000  // Random delay between 2000ms (2s) and 10000ms (10s)
@@ -137,7 +130,6 @@ export default function Game() {
     return () => {
       clearAllTimers() // Clear all timers on cleanup
       setIsWarningFlash(false)
-      setIsImpactFlash(false)
       setIsBeamActive(false)
       setActiveEyeStalk(null)
       setCanBlock(false)
@@ -156,16 +148,17 @@ export default function Game() {
           setCanRestart(false)  // Reset the restart flag
           setBlockedCount(0)
           setIsWarningFlash(false)
-          setIsImpactFlash(false)
           setIsBeamActive(false)
           setActiveEyeStalk(null)
           setCanBlock(false)
-          setIsShieldActive(false)
+          setIsShieldAnimating(false)
+          setAnimationKey(prev => prev + 1)
           setIsSpacebarDown(false)  // Reset spacebar state too
           setBeamStyle(null)
           clearAllTimers()
           if (shieldTimerRef.current) {
             clearTimeout(shieldTimerRef.current)
+            shieldTimerRef.current = null
           }
           setTimeout(() => {
             scheduleNextBeam()
@@ -174,11 +167,10 @@ export default function Game() {
           // Clear any existing shield timer
           if (shieldTimerRef.current) {
             clearTimeout(shieldTimerRef.current)
-            shieldTimerRef.current = undefined
+            shieldTimerRef.current = null
           }
           
           // Activate shield and animation
-          setIsShieldActive(true)
           setIsShieldAnimating(true)
           setAnimationKey(prev => prev + 1)
           
@@ -186,7 +178,6 @@ export default function Game() {
           if (canBlock) {
             setBlockedCount(prev => prev + 1)
             setCanBlock(false)
-            setIsImpactFlash(true)
             setIsScoreAnimating(true)  // Start score animation
             setScoreAnimationKey(prev => prev + 1)  // Force animation restart
             
@@ -194,14 +185,11 @@ export default function Game() {
             setTimeout(() => {
               setIsScoreAnimating(false)
             }, 1000)
-            
-            setTimeout(() => setIsImpactFlash(false), 50)
           }
 
           // Set shield timer to deactivate after 1 second
           shieldTimerRef.current = setTimeout(() => {
-            setIsShieldActive(false)
-            shieldTimerRef.current = undefined
+            setIsShieldAnimating(false)
           }, 1000)
         }
       }
@@ -221,8 +209,7 @@ export default function Game() {
       window.removeEventListener('keyup', handleKeyUp)
       if (shieldTimerRef.current) {
         clearTimeout(shieldTimerRef.current)
-        shieldTimerRef.current = undefined
-        setIsShieldActive(false)  // Ensure shield is deactivated on cleanup
+        shieldTimerRef.current = null
       }
     }
   }, [canBlock, isGameOver, canRestart, scheduleNextBeam, clearAllTimers, isSpacebarDown])
@@ -249,18 +236,13 @@ export default function Game() {
         // Add a small buffer to the length to ensure beams reach the bottom
         const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY) + 20
 
-        // Set the beam angle as a CSS variable
-        if (gameAreaRef.current) {
-          gameAreaRef.current.style.setProperty('--beam-angle', `${angle}deg`)
-        }
-
         setBeamStyle({ angle, length })
       }
       animationFrameRef.current = requestAnimationFrame(updateBeamPosition)
     }
 
     if (isBeamActive) {
-      updateBeamPosition()
+      animationFrameRef.current = requestAnimationFrame(updateBeamPosition)
     }
 
     return () => {
@@ -269,25 +251,6 @@ export default function Game() {
       }
     }
   }, [isBeamActive, activeEyeStalk])
-
-  // Add cleanup for shield timer in the game reset
-  const resetGame = () => {
-    setIsGameOver(false)
-    setCanRestart(false)
-    setBlockedCount(0)
-    setIsWarningFlash(false)
-    setIsImpactFlash(false)
-    setIsBeamActive(false)
-    setActiveEyeStalk(null)
-    setCanBlock(false)
-    setIsShieldActive(false)
-    setIsSpacebarDown(false)  // Reset spacebar state too
-    setBeamStyle(null)
-    clearAllTimers()
-    setTimeout(() => {
-      scheduleNextBeam()
-    }, 100)
-  }
 
   // At the top of the component, add a useEffect to set up the fog animation
   useEffect(() => {
@@ -299,7 +262,10 @@ export default function Game() {
   }, []); // Empty dependency array so it only runs once
 
   return (
-    <div ref={gameAreaRef} className={`${styles.gameArea} ${isWarningFlash ? styles.warningFlash : ''} ${isBeamActive ? styles.frameFlash : ''}`}>
+    <div 
+      ref={gameAreaRef} 
+      className={`${styles.gameArea} ${isWarningFlash ? styles.warningFlash : ''} ${isFrameFlashing ? styles.frameFlash : ''}`}
+    >
       <div className={styles.backgroundLayer}>
         <div className={styles.fogContainer}>
           <div className={styles.fogLayer1} />
@@ -308,9 +274,13 @@ export default function Game() {
         </div>
       </div>
       <div ref={beholderRef} className={styles.beholder}>
-        <img 
+        <Image 
           src={isGameOver ? "/images/beholder_closed.png" : "/images/beholder_blink_loop.gif"} 
-          alt="Beholder" 
+          alt="Beholder"
+          width={300}
+          height={300}
+          priority
+          className={styles.beholderImage}
         />
         {activeEyeStalk && isBeamActive && (
           <>

@@ -114,9 +114,9 @@
   top: 0;
 }
 
-.beholder img {
-  width: 300px;
-  height: 300px;
+.beholderImage {
+  width: 300px !important;
+  height: 300px !important;
   object-fit: contain;
   /* Keep the pixel art crisp */
   image-rendering: pixelated;
