@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import styles from './Game.module.css'
+import FogBackground from './FogBackground'
 
 // Define eye stalk positions but let angles be calculated
 const EYE_STALKS = [
@@ -54,6 +55,9 @@ export default function Game() {
   const [scoreAnimationKey, setScoreAnimationKey] = useState(0)
   const [isScoreAnimating, setIsScoreAnimating] = useState(false)
 
+  // Add new state for frame flash
+  const [frameFlashKey, setFrameFlashKey] = useState(0)
+
   // Clear all timers helper
   const clearAllTimers = useCallback(() => {
     if (beamTimerRef.current) clearTimeout(beamTimerRef.current)
@@ -74,11 +78,17 @@ export default function Game() {
     setIsWarningFlash(true)
     setActiveEyeStalk(eyeStalk)
     
+    // Set the beam color as a CSS variable
+    if (gameAreaRef.current) {
+      gameAreaRef.current.style.setProperty('--beam-color', eyeStalk.color);
+    }
+    
     warningTimerRef.current = setTimeout(() => {
       if (isGameOver) return
       setIsWarningFlash(false)
       setIsBeamActive(true)
       setCanBlock(true)
+      setFrameFlashKey(prev => prev + 1) // Trigger frame flash animation
       
       // Beam hit check
       impactTimerRef.current = setTimeout(() => {
@@ -271,14 +281,34 @@ export default function Game() {
     }, 100)
   }
 
+  // At the top of the component, add a useEffect to set up the fog animation
+  useEffect(() => {
+    // Set random starting points for each fog layer
+    const root = document.documentElement;
+    root.style.setProperty('--fog1-start', `${Math.random() * 360}deg`);
+    root.style.setProperty('--fog2-start', `${Math.random() * 360}deg`);
+    root.style.setProperty('--fog3-start', `${Math.random() * 360}deg`);
+  }, []); // Empty dependency array so it only runs once
+
   return (
-    <div ref={gameAreaRef} className={`${styles.gameArea} ${isWarningFlash ? styles.warningFlash : ''}`}>
-      {/* Color flash overlay using the active beam color */}
+    <div 
+      ref={gameAreaRef} 
+      className={`${styles.gameArea} ${isWarningFlash ? styles.warningFlash : ''} ${isBeamActive ? styles.frameFlash : ''}`}
+      key={frameFlashKey} // Force animation restart
+    >
+      <div className={styles.backgroundLayer}>
+        <div className={styles.fogContainer}>
+          <div className={styles.fogLayer1} />
+          <div className={styles.fogLayer2} />
+          <div className={styles.fogLayer3} />
+        </div>
+      </div>
+      
       {isImpactFlash && activeEyeStalk && (
         <div 
           className={styles.impactFlash} 
           style={{
-            backgroundColor: `${activeEyeStalk.color}CC`, // CC = 80% opacity in hex
+            backgroundColor: `${activeEyeStalk.color}CC`,
             boxShadow: `inset 0 0 50px ${activeEyeStalk.color}`
           }}
         />
@@ -295,9 +325,6 @@ export default function Game() {
 
       {!isGameOver && (
         <>
-          <div className={styles.instructions}>
-            Press SPACE to block the beams!
-          </div>
           <div className={styles.scoreContainer}>
             <div 
               key={scoreAnimationKey}

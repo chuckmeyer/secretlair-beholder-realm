@@ -1,11 +1,29 @@
+:root {
+  --fog1-start: 0deg;
+  --fog2-start: 0deg;
+  --fog3-start: 0deg;
+}
+
 .gameArea {
   width: 100%;
   height: 100%;
   position: relative;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
+  background: transparent;
   border-radius: 8px;
   transition: background-color 0.1s;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.backgroundLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
 
 .warningFlash {
@@ -18,7 +36,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1000;
+  z-index: 5;
   animation: colorFlashFade 50ms linear;
   pointer-events: none;
   mix-blend-mode: screen;
@@ -42,6 +60,8 @@
   top: 50%;
   transform: translate(-50%, -50%);
   animation: float 6s ease-in-out infinite;
+  z-index: 3;
+  isolation: isolate;
 }
 
 .shadow {
@@ -56,6 +76,7 @@
   filter: blur(8px);
   animation: shadowFloat 6s ease-in-out infinite;
   transform-origin: center;
+  z-index: 2;
 }
 
 .effectsContainer {
@@ -66,6 +87,7 @@
   height: 100%;
   pointer-events: none;
   overflow: visible; /* Allow beams to extend beyond container */
+  z-index: 4;
 }
 
 .eyeGlow {
@@ -185,7 +207,7 @@
   position: absolute;
   top: 20px;
   right: 20px;
-  z-index: 10;
+  z-index: 4;
 }
 
 .scoreContent {
@@ -222,7 +244,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 6;
   animation: fadeInRed 1s ease-in forwards;
 }
 
@@ -295,7 +317,7 @@
   background: rgba(0, 0, 0, 0.3);
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  z-index: 10;
+  z-index: 4;
   pointer-events: none;
 }
 
@@ -309,5 +331,183 @@
     background: rgba(0, 0, 0, 0.3);
     box-shadow: none;
     text-shadow: none;
+  }
+}
+
+/* Add these new fog animations */
+@keyframes fogSwirl1 {
+  from { transform: rotate(var(--fog1-start)); }
+  to { transform: rotate(calc(var(--fog1-start) + 360deg)); }
+}
+
+@keyframes fogSwirl2 {
+  from { transform: rotate(var(--fog2-start)); }
+  to { transform: rotate(calc(var(--fog2-start) - 360deg)); }
+}
+
+@keyframes fogSwirl3 {
+  from { transform: rotate(var(--fog3-start)); }
+  to { transform: rotate(calc(var(--fog3-start) + 360deg)); }
+}
+
+/* Add fog layers */
+.fogContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.fogLayer1, .fogLayer2, .fogLayer3 {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  opacity: 0.3;
+  will-change: transform;
+}
+
+.fogLayer1 {
+  background: radial-gradient(circle at center, 
+    rgba(128, 0, 255, 0.4) 0%,
+    rgba(128, 0, 255, 0.2) 40%,
+    rgba(128, 0, 255, 0.1) 60%,
+    transparent 80%
+  );
+  animation: fogWave1 60s linear infinite;
+}
+
+.fogLayer2 {
+  background: radial-gradient(circle at center, 
+    rgba(160, 32, 240, 0.3) 0%,
+    rgba(160, 32, 240, 0.15) 40%,
+    rgba(160, 32, 240, 0.05) 60%,
+    transparent 80%
+  );
+  animation: fogWave2 45s linear infinite;
+}
+
+.fogLayer3 {
+  background: radial-gradient(circle at center, 
+    rgba(147, 112, 219, 0.3) 0%,
+    rgba(147, 112, 219, 0.15) 40%,
+    rgba(147, 112, 219, 0.05) 60%,
+    transparent 80%
+  );
+  animation: fogWave3 30s linear infinite;
+}
+
+@keyframes fogWave1 {
+  0% { 
+    transform: rotate(0deg) scale(1) translate(0, 0);
+  }
+  25% {
+    transform: rotate(90deg) scale(1.1) translate(5%, 5%);
+  }
+  50% {
+    transform: rotate(180deg) scale(1) translate(0, 0);
+  }
+  75% {
+    transform: rotate(270deg) scale(0.9) translate(-5%, -5%);
+  }
+  100% { 
+    transform: rotate(360deg) scale(1) translate(0, 0);
+  }
+}
+
+@keyframes fogWave2 {
+  0% { 
+    transform: rotate(120deg) scale(0.9) translate(-5%, 5%);
+  }
+  25% {
+    transform: rotate(210deg) scale(1) translate(0, 0);
+  }
+  50% {
+    transform: rotate(300deg) scale(1.1) translate(5%, -5%);
+  }
+  75% {
+    transform: rotate(390deg) scale(1) translate(0, 0);
+  }
+  100% { 
+    transform: rotate(480deg) scale(0.9) translate(-5%, 5%);
+  }
+}
+
+@keyframes fogWave3 {
+  0% { 
+    transform: rotate(240deg) scale(1.1) translate(5%, -5%);
+  }
+  25% {
+    transform: rotate(330deg) scale(1) translate(0, 0);
+  }
+  50% {
+    transform: rotate(420deg) scale(0.9) translate(-5%, 5%);
+  }
+  75% {
+    transform: rotate(510deg) scale(1) translate(0, 0);
+  }
+  100% { 
+    transform: rotate(600deg) scale(1.1) translate(5%, -5%);
+  }
+}
+
+/* Update existing gameArea to accommodate fog */
+.gameArea {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  border-radius: 8px;
+  transition: background-color 0.1s;
+}
+
+/* Ensure other elements stay on top */
+.beholder {
+  z-index: 3;
+}
+
+.shadow {
+  z-index: 2;
+}
+
+.effectsContainer {
+  z-index: 4;
+}
+
+.scoreContainer, .shieldIndicator {
+  z-index: 4;
+}
+
+.impactFlash {
+  z-index: 5;
+}
+
+.gameOverOverlay {
+  z-index: 6;
+}
+
+/* Add new class for the frame flash */
+.frameFlash {
+  animation: frameFlash 0.2s linear;
+}
+
+@keyframes frameFlash {
+  0% {
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    border-color: var(--beam-color, white);
+    box-shadow: 0 0 30px var(--beam-color, white);
+  }
+  100% {
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
   }
 } 

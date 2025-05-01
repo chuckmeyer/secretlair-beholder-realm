@@ -10,8 +10,16 @@ export default function GamePage() {
       </Link>
       <div className={styles.gameContainer}>
         <h1 className={styles.title}>Beholder's Realm</h1>
-        <div className={styles.gameCanvas}>
-          <Game />
+        <div className={styles.gameCanvasWrapper}>
+          <div className={styles.fogLayer1}></div>
+          <div className={styles.fogLayer2}></div>
+          <div className={styles.fogLayer3}></div>
+          <div className={styles.gameCanvas}>
+            <Game />
+          </div>
+        </div>
+        <div className={styles.instructions}>
+          Press SPACE to block the beams!
         </div>
       </div>
     </main>
