@@ -32,10 +32,12 @@ export default function Game() {
         const gameRect = gameAreaRef.current.getBoundingClientRect()
         const beholderRect = beholderRef.current.getBoundingClientRect()
 
-        // Convert percentage positions to pixels, accounting for Beholder's current position
-        const startX = (parseFloat(activeEyeStalk.left) / 100) * beholderRect.width
-        const startY = (parseFloat(activeEyeStalk.top) / 100) * beholderRect.height
-        
+        // Calculate start position relative to the beholder's position
+        const startX = beholderRect.left - gameRect.left + 
+                      (parseFloat(activeEyeStalk.left) / 100) * beholderRect.width
+        const startY = beholderRect.top - gameRect.top + 
+                      (parseFloat(activeEyeStalk.top) / 100) * beholderRect.height
+
         // Target is bottom center of game area
         const targetX = gameRect.width / 2
         const targetY = gameRect.height
@@ -44,9 +46,9 @@ export default function Game() {
         const deltaX = targetX - startX
         const deltaY = targetY - startY
         const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI) - 90
-        
-        // Ensure beam is long enough to always reach bottom
-        const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY) * 2
+
+        // Calculate length to ensure beam reaches bottom
+        const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY) * 1.5 // Add some extra length to ensure it reaches
 
         setBeamStyle({ angle, length })
       }
