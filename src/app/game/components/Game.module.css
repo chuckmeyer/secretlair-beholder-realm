@@ -173,6 +173,14 @@
   filter: blur(2px);
   animation: glowPulse 0.5s ease-in-out infinite alternate;
   z-index: 2;
+  background: radial-gradient(circle at center,
+    var(--beam-color) 0%,
+    var(--beam-color) 40%,
+    transparent 70%
+  );
+  box-shadow: 
+    0 0 10px var(--beam-color),
+    0 0 20px var(--beam-color);
 }
 
 .beamContainer {
@@ -184,17 +192,17 @@
 
 .eyeBeam {
   position: absolute;
-  width: 8px;
+  width: 12px;
   height: 100%;
   background: var(--beam-color);
   transform-origin: top center;
   filter: blur(3px);
-  left: -4px;
+  left: -6px;
   box-shadow: 
     0 0 10px var(--beam-color),
     0 0 20px var(--beam-color),
     0 0 30px var(--beam-color);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%);
   opacity: 0.7;
 }
 
@@ -218,6 +226,7 @@
     0 0 15px var(--beam-color),
     0 0 30px var(--beam-color);
   opacity: 0.6;
+  clip-path: polygon(25% 0, 75% 0, 100% 100%, 0 100%);
 }
 
 .eyeBeam::before {
@@ -233,6 +242,7 @@
   );
   opacity: 0.3;
   animation: particleFloat 2s linear infinite;
+  clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%);
 }
 
 @keyframes particleFloat {
@@ -858,19 +868,20 @@
 .gameCanvas:fullscreen .shieldIndicator {
   width: 400px;
   height: 67px;
-  bottom: 10px;
+  bottom: 20px;
   box-shadow: 0 0 30px rgba(144, 238, 144, 0.2);
 }
 
 .gameCanvas:fullscreen .eyeBeam {
-  width: 12px;
-  left: -6px;
-  filter: blur(4px);
+  width: 14px;
+  left: -7px;
+  filter: blur(3.5px);
   box-shadow: 
-    0 0 15px var(--beam-color),
-    0 0 30px var(--beam-color),
-    0 0 45px var(--beam-color);
-  opacity: 0.75;
+    0 0 12px var(--beam-color),
+    0 0 24px var(--beam-color),
+    0 0 36px var(--beam-color);
+  opacity: 0.7;
+  transform: scaleY(1.2);
 }
 
 .gameCanvas:fullscreen .eyeBeam::after {
@@ -884,6 +895,7 @@
 
 .gameCanvas:fullscreen .eyeBeam::before {
   animation: particleFloat 3s linear infinite;
+  transform: scaleY(1.2);
 }
 
 .gameCanvas:fullscreen .levelContainer {
@@ -981,9 +993,7 @@
   }
 
   .gameCanvas:fullscreen .shieldIndicator {
-    bottom: 5px;
-    width: 320px;
-    height: 56px;
+    bottom: 15px;
   }
 
   .gameCanvas:fullscreen .shieldText {
@@ -1000,8 +1010,8 @@
   }
 
   .eyeBeam {
-    width: 6px;
-    left: -3px;
+    width: 8px;
+    left: -4px;
     filter: blur(2.5px);
     box-shadow: 
       0 0 8px var(--beam-color),
@@ -1011,14 +1021,15 @@
   }
 
   .gameCanvas:fullscreen .eyeBeam {
-    width: 10px;
-    left: -5px;
+    width: 14px;
+    left: -7px;
     filter: blur(3.5px);
     box-shadow: 
       0 0 12px var(--beam-color),
       0 0 24px var(--beam-color),
       0 0 36px var(--beam-color);
     opacity: 0.7;
+    transform: scaleY(1.3);
   }
 }
 
