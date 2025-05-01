@@ -34,12 +34,37 @@ export default function Game() {
   const impactTimerRef = useRef<NodeJS.Timeout>()
   const cleanupTimerRef = useRef<NodeJS.Timeout>()
 
+  // Add new state for tracking if player's shield is active
+  const [isShieldActive, setIsShieldActive] = useState(false)
+  const shieldTimerRef = useRef<NodeJS.Timeout>()
+
+  // Add new state for controlling restart availability
+  const [canRestart, setCanRestart] = useState(false)
+
+  // Add state for tracking if the spacebar is being held down
+  const [isSpacebarDown, setIsSpacebarDown] = useState(false)
+
+  // Add state to track animation key
+  const [animationKey, setAnimationKey] = useState(0)
+
+  // Add a new state for the visual effect
+  const [isShieldAnimating, setIsShieldAnimating] = useState(false)
+
+  // Add state for score animation
+  const [scoreAnimationKey, setScoreAnimationKey] = useState(0)
+  const [isScoreAnimating, setIsScoreAnimating] = useState(false)
+
   // Clear all timers helper
   const clearAllTimers = useCallback(() => {
     if (beamTimerRef.current) clearTimeout(beamTimerRef.current)
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
     if (impactTimerRef.current) clearTimeout(impactTimerRef.current)
     if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current)
+    if (shieldTimerRef.current) {
+      clearTimeout(shieldTimerRef.current)
+      shieldTimerRef.current = undefined
+      setIsShieldActive(false)  // Ensure shield is deactivated when clearing timers
+    }
   }, [])
 
   const shootBeam = useCallback(() => {
@@ -62,6 +87,10 @@ export default function Game() {
             setIsGameOver(true)
             setIsImpactFlash(true)
             setTimeout(() => setIsImpactFlash(false), 50)
+            // Add delay before allowing restart
+            setTimeout(() => {
+              setCanRestart(true)
+            }, 1000) // Wait 1 second before allowing restart
             return false
           }
           return prev
@@ -105,38 +134,82 @@ export default function Game() {
     }
   }, [isGameOver, scheduleNextBeam, clearAllTimers])
 
-  // Keypress handler
+  // Split the keypress handler into keydown and keyup handlers
   useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.code === 'Space') {
-        if (isGameOver) {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Space' && !isSpacebarDown) {
+        setIsSpacebarDown(true)
+        
+        if (isGameOver && canRestart) {
           // Reset all game states
           setIsGameOver(false)
+          setCanRestart(false)  // Reset the restart flag
           setBlockedCount(0)
           setIsWarningFlash(false)
           setIsImpactFlash(false)
           setIsBeamActive(false)
           setActiveEyeStalk(null)
           setCanBlock(false)
+          setIsShieldActive(false)
+          setIsSpacebarDown(false)  // Reset spacebar state too
           setBeamStyle(null)
           clearAllTimers()
-          // Schedule first beam after a short delay to let states settle
+          if (shieldTimerRef.current) {
+            clearTimeout(shieldTimerRef.current)
+          }
           setTimeout(() => {
             scheduleNextBeam()
           }, 100)
-        } else if (canBlock) {
-          // Successful block
-          setBlockedCount(prev => prev + 1)
-          setCanBlock(false)
-          setIsImpactFlash(true)
-          setTimeout(() => setIsImpactFlash(false), 50)
+        } else if (!isGameOver) {
+          // Clear any existing shield timer
+          if (shieldTimerRef.current) {
+            clearTimeout(shieldTimerRef.current)
+            shieldTimerRef.current = undefined
+          }
+          
+          // Activate shield and animation
+          setIsShieldActive(true)
+          setIsShieldAnimating(true)
+          setAnimationKey(prev => prev + 1)
+          
+          // Check for block immediately
+          if (canBlock) {
+            setBlockedCount(prev => prev + 1)
+            setCanBlock(false)
+            setIsImpactFlash(true)
+            setIsScoreAnimating(true)  // Start score animation
+            setScoreAnimationKey(prev => prev + 1)  // Force animation restart
+            setTimeout(() => setIsImpactFlash(false), 50)
+          }
+
+          // Set shield timer to deactivate after 1 second
+          shieldTimerRef.current = setTimeout(() => {
+            setIsShieldActive(false)
+            shieldTimerRef.current = undefined
+          }, 1000)
         }
       }
     }
 
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [canBlock, isGameOver, scheduleNextBeam, clearAllTimers])
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code === 'Space') {
+        setIsSpacebarDown(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      if (shieldTimerRef.current) {
+        clearTimeout(shieldTimerRef.current)
+        shieldTimerRef.current = undefined
+        setIsShieldActive(false)  // Ensure shield is deactivated on cleanup
+      }
+    }
+  }, [canBlock, isGameOver, canRestart, scheduleNextBeam, clearAllTimers, isSpacebarDown])
 
   // Continuously update beam position during animation
   useEffect(() => {
@@ -179,6 +252,25 @@ export default function Game() {
     }
   }, [isBeamActive, activeEyeStalk])
 
+  // Add cleanup for shield timer in the game reset
+  const resetGame = () => {
+    setIsGameOver(false)
+    setCanRestart(false)
+    setBlockedCount(0)
+    setIsWarningFlash(false)
+    setIsImpactFlash(false)
+    setIsBeamActive(false)
+    setActiveEyeStalk(null)
+    setCanBlock(false)
+    setIsShieldActive(false)
+    setIsSpacebarDown(false)  // Reset spacebar state too
+    setBeamStyle(null)
+    clearAllTimers()
+    setTimeout(() => {
+      scheduleNextBeam()
+    }, 100)
+  }
+
   return (
     <div ref={gameAreaRef} className={`${styles.gameArea} ${isWarningFlash ? styles.warningFlash : ''}`}>
       {/* Color flash overlay using the active beam color */}
@@ -192,18 +284,37 @@ export default function Game() {
         />
       )}
       
-      {isGameOver ? (
-        <div className={styles.gameOverOverlay}>
+      {isGameOver && (
+        <div className={`${styles.gameOverOverlay} ${canRestart ? styles.showRestart : ''}`}>
           <h1 className={styles.gameOverText}>Game Over</h1>
-          <p className={styles.retryText}>press space bar to retry</p>
+          {canRestart && (
+            <p className={styles.retryText}>press space bar to retry</p>
+          )}
         </div>
-      ) : (
+      )}
+
+      {!isGameOver && (
         <>
           <div className={styles.instructions}>
             Press SPACE to block the beams!
           </div>
-          <div className={styles.scoreDisplay}>
-            Blocked: {blockedCount}
+          <div className={styles.scoreContainer}>
+            <div 
+              key={scoreAnimationKey}
+              className={styles.scoreContent}
+              style={{ animation: isScoreAnimating ? `${styles.scorePulse} 3s ease-out forwards` : 'none' }}
+              onAnimationEnd={() => setIsScoreAnimating(false)}
+            >
+              Blocked: {blockedCount}
+            </div>
+          </div>
+          <div 
+            key={animationKey}
+            className={styles.shieldIndicator}
+            style={{ animation: isShieldAnimating ? `${styles.shieldPulse} 3s ease-out forwards` : 'none' }}
+            onAnimationEnd={() => setIsShieldAnimating(false)}
+          >
+            Shield
           </div>
         </>
       )}

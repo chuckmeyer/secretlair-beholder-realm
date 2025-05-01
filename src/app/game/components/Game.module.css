@@ -181,10 +181,115 @@
   }
 }
 
-.scoreDisplay {
+.scoreContainer {
   position: absolute;
   top: 20px;
   right: 20px;
+  z-index: 10;
+}
+
+.scoreContent {
+  color: white;
+  font-size: 1.2rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  pointer-events: none;
+}
+
+@keyframes scorePulse {
+  0%, 5% {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 1);
+  }
+  100% {
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: none;
+    text-shadow: none;
+  }
+}
+
+.gameOverOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 0, 0, 0);
+  backdrop-filter: blur(0px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeInRed 1s ease-in forwards;
+}
+
+.gameOverText {
+  position: absolute;
+  top: calc(50% - 2rem); /* Offset by half the retry text height */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 4rem;
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+  margin: 0;
+  opacity: 0;
+  animation: fadeInGameOver 1s ease-out forwards;
+  white-space: nowrap;
+}
+
+.retryText {
+  position: absolute;
+  top: calc(50% + 3rem); /* Position below game over text */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.5rem;
+  opacity: 0;
+  animation: fadeInRetry 0.5s ease-out 1s forwards;
+  white-space: nowrap;
+}
+
+@keyframes fadeInRed {
+  0% {
+    background: rgba(255, 0, 0, 0);
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    background: rgba(255, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+  }
+}
+
+@keyframes fadeInGameOver {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 20px));
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes fadeInRetry {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 20px));
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.shieldIndicator {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   color: white;
   font-size: 1.2rem;
   background: rgba(0, 0, 0, 0.3);
@@ -194,53 +299,15 @@
   pointer-events: none;
 }
 
-.gameOverOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.5s ease-in;
-}
-
-.gameOverText {
-  color: white;
-  font-size: 4rem;
-  text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
-  margin: 0;
-  animation: pulseText 2s ease-in-out infinite;
-}
-
-.retryText {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.5rem;
-  margin-top: 1rem;
-  animation: pulseText 2s ease-in-out infinite 0.5s;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+@keyframes shieldPulse {
+  0%, 5% {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 1);
   }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes pulseText {
-  0%, 100% {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
+  100% {
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: none;
+    text-shadow: none;
   }
 } 
