@@ -5,7 +5,7 @@
   overflow: hidden;
   background: transparent;
   border-radius: 8px;
-  transition: background-color 0.1s;
+  transition: all 0.1s;
   border: 4px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
 }
@@ -21,7 +21,51 @@
 }
 
 .warningFlash {
-  background-color: rgba(255, 255, 255, 0.3) !important;
+  position: relative;
+}
+
+.warningFlash::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--flash-color, white);
+  opacity: 0.3;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.gameCanvas:fullscreen {
+  background: transparent;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.gameCanvas:fullscreen .gameArea {
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.gameCanvas:fullscreen .warningFlash::before {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
 }
 
 .impactFlash {
@@ -30,7 +74,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 5;
+  z-index: 101;
   animation: colorFlashFade 50ms linear;
   pointer-events: none;
   mix-blend-mode: screen;
@@ -50,14 +94,15 @@
 
 .beholder {
   position: absolute;
-  left: 50%;
   top: 40%;
+  left: 50%;
   transform: translate(-50%, -50%);
   animation: float var(--float-duration, 6s) ease-in-out infinite;
-  z-index: 3;
+  z-index: 4;
   isolation: isolate;
   will-change: transform;
   pointer-events: none;
+  transition: all 0.3s ease;
 }
 
 .shadow {
@@ -72,7 +117,7 @@
   filter: blur(12px);
   animation: shadowFloat var(--float-duration, 6s) ease-in-out infinite;
   transform-origin: center;
-  z-index: 2;
+  z-index: 3;
 }
 
 .effectsContainer {
@@ -115,13 +160,14 @@
 }
 
 .beholderImage {
-  width: 300px !important;
-  height: 300px !important;
+  width: 300px;
+  height: 300px;
   object-fit: contain;
   /* Keep the pixel art crisp */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
+  transition: all 0.3s ease;
 }
 
 @keyframes float {
@@ -258,7 +304,7 @@
 
 .retryText {
   position: absolute;
-  top: calc(50% + 3rem); /* Position below game over text */
+  top: calc(50% + 3rem);
   left: 50%;
   transform: translate(-50%, -50%);
   color: rgba(255, 255, 255, 0.8);
@@ -266,6 +312,7 @@
   opacity: 0;
   animation: fadeInRetry 0.5s ease-out 1s forwards;
   white-space: nowrap;
+  z-index: 1000;
 }
 
 @keyframes fadeInRed {
@@ -314,6 +361,18 @@
   z-index: 4;
   pointer-events: none;
   transform: translateX(-50%) perspective(200px) rotateX(5deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shieldText {
+  color: white;
+  font-size: 0.9rem;
+  text-align: center;
+  opacity: 0.8;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
 }
 
 .shieldActive {
@@ -323,6 +382,11 @@
     0 0 40px rgba(144, 238, 144, 0.6),
     inset 0 0 20px rgba(144, 238, 144, 0.9);
   animation: shieldPulse 3s ease-out forwards;
+}
+
+.shieldActive .shieldText {
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 @keyframes shieldPulse {
@@ -364,7 +428,7 @@
   height: 100%;
   overflow: hidden;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
 .fogLayer1, .fogLayer2, .fogLayer3 {
@@ -379,9 +443,9 @@
 
 .fogLayer1 {
   background: radial-gradient(circle at center, 
-    rgba(128, 0, 255, 0.4) 0%,
-    rgba(128, 0, 255, 0.2) 40%,
-    rgba(128, 0, 255, 0.1) 60%,
+    rgba(128, 0, 255, 0.6) 0%,
+    rgba(128, 0, 255, 0.4) 40%,
+    rgba(128, 0, 255, 0.2) 60%,
     transparent 80%
   );
   animation: fogWave1 60s linear infinite;
@@ -390,9 +454,9 @@
 
 .fogLayer2 {
   background: radial-gradient(circle at center, 
-    rgba(160, 32, 240, 0.3) 0%,
-    rgba(160, 32, 240, 0.15) 40%,
-    rgba(160, 32, 240, 0.05) 60%,
+    rgba(160, 32, 240, 0.5) 0%,
+    rgba(160, 32, 240, 0.3) 40%,
+    rgba(160, 32, 240, 0.1) 60%,
     transparent 80%
   );
   animation: fogWave2 45s linear infinite;
@@ -401,9 +465,9 @@
 
 .fogLayer3 {
   background: radial-gradient(circle at center, 
-    rgba(147, 112, 219, 0.3) 0%,
-    rgba(147, 112, 219, 0.15) 40%,
-    rgba(147, 112, 219, 0.05) 60%,
+    rgba(147, 112, 219, 0.5) 0%,
+    rgba(147, 112, 219, 0.3) 40%,
+    rgba(147, 112, 219, 0.1) 60%,
     transparent 80%
   );
   animation: fogWave3 30s linear infinite;
@@ -413,75 +477,79 @@
 @keyframes fogWave1 {
   0% { 
     transform: rotate(0deg) scale(1) translate(0, 0);
+    opacity: 0.4;
   }
   25% {
     transform: rotate(90deg) scale(1.1) translate(5%, 5%);
+    opacity: 0.3;
   }
   50% {
     transform: rotate(180deg) scale(1) translate(0, 0);
+    opacity: 0.4;
   }
   75% {
     transform: rotate(270deg) scale(0.9) translate(-5%, -5%);
+    opacity: 0.3;
   }
   100% { 
     transform: rotate(360deg) scale(1) translate(0, 0);
+    opacity: 0.4;
   }
 }
 
 @keyframes fogWave2 {
   0% { 
     transform: rotate(120deg) scale(0.9) translate(-5%, 5%);
+    opacity: 0.3;
   }
   25% {
     transform: rotate(210deg) scale(1) translate(0, 0);
+    opacity: 0.4;
   }
   50% {
     transform: rotate(300deg) scale(1.1) translate(5%, -5%);
+    opacity: 0.3;
   }
   75% {
     transform: rotate(390deg) scale(1) translate(0, 0);
+    opacity: 0.4;
   }
   100% { 
     transform: rotate(480deg) scale(0.9) translate(-5%, 5%);
+    opacity: 0.3;
   }
 }
 
 @keyframes fogWave3 {
   0% { 
     transform: rotate(240deg) scale(1.1) translate(5%, -5%);
+    opacity: 0.3;
   }
   25% {
     transform: rotate(330deg) scale(1) translate(0, 0);
+    opacity: 0.4;
   }
   50% {
     transform: rotate(420deg) scale(0.9) translate(-5%, 5%);
+    opacity: 0.3;
   }
   75% {
     transform: rotate(510deg) scale(1) translate(0, 0);
+    opacity: 0.4;
   }
   100% { 
     transform: rotate(600deg) scale(1.1) translate(5%, -5%);
+    opacity: 0.3;
   }
-}
-
-/* Update existing gameArea to accommodate fog */
-.gameArea {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-  background: transparent;
-  border-radius: 8px;
-  transition: background-color 0.1s;
 }
 
 /* Ensure other elements stay on top */
 .beholder {
-  z-index: 3;
+  z-index: 4;
 }
 
 .shadow {
-  z-index: 2;
+  z-index: 3;
 }
 
 .effectsContainer {
@@ -549,4 +617,270 @@
   pointer-events: none;
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.fullscreenButton {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+  transition: all 0.3s ease;
+  padding: 0;
+  line-height: 1;
+  touch-action: manipulation;
+}
+
+.gameCanvas:fullscreen .fullscreenButton {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  font-size: 1.8rem;
+}
+
+.fullscreenButton:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.fullscreenButton:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .retryText {
+    font-size: 1.2rem;
+    top: calc(50% + 2.5rem);
+  }
+
+  .fullscreenButton {
+    bottom: 5px;
+    right: 5px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    border-width: 3px;
+  }
+
+  .gameCanvas:fullscreen .fullscreenButton {
+    bottom: 10px;
+    right: 10px;
+    width: 50px;
+    height: 50px;
+    font-size: 1.8rem;
+  }
+}
+
+.gameCanvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 2;
+}
+
+.gameCanvas:fullscreen .beholder {
+  transform: scale(1.2);
+}
+
+.gameCanvas:fullscreen .shadow {
+  width: 500px;
+  height: 83px;
+  filter: blur(20px);
+}
+
+.gameCanvas:fullscreen .effectsContainer {
+  z-index: 4;
+}
+
+.gameCanvas:fullscreen .scoreContainer, .gameCanvas:fullscreen .shieldIndicator {
+  z-index: 4;
+}
+
+.gameCanvas:fullscreen .impactFlash {
+  z-index: 5;
+}
+
+.gameCanvas:fullscreen .gameOverOverlay {
+  z-index: 6;
+}
+
+.gameCanvas:fullscreen .frameFlash {
+  animation: frameFlash 0.2s linear;
+  border-width: 4px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+}
+
+/* Scale up beholder in fullscreen */
+.gameCanvas:fullscreen .beholderImage {
+  width: 500px;
+  height: 500px;
+}
+
+/* Adjust eye stalk positions for larger beholder in fullscreen */
+.gameCanvas:fullscreen .eyeGlow,
+.gameCanvas:fullscreen .beamContainer {
+  transform: scale(1.67); /* 500/300 = 1.67 scale factor */
+}
+
+/* Fullscreen adjustments */
+.gameCanvas:fullscreen .backgroundLayer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.gameCanvas:fullscreen .fogContainer {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2;
+}
+
+.gameCanvas:fullscreen .shadow {
+  width: 500px;
+  height: 83px;
+  filter: blur(20px);
+  z-index: 3;
+}
+
+.gameCanvas:fullscreen .beholder {
+  z-index: 4;
+}
+
+.gameCanvas:fullscreen .whiteFogOverlay {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  z-index: 5;
+}
+
+.gameCanvas:fullscreen .shieldIndicator {
+  width: 333px;
+  height: 67px;
+  bottom: 20px;
+  box-shadow: 0 0 30px rgba(144, 238, 144, 0.2);
+}
+
+.gameCanvas:fullscreen .levelContainer {
+  top: 30px;
+  left: 30px;
+}
+
+.gameCanvas:fullscreen .levelContent {
+  font-size: 2rem;
+  padding: 0.8rem 1.5rem;
+}
+
+.gameCanvas:fullscreen .scoreContainer {
+  top: 30px;
+  right: 30px;
+}
+
+.gameCanvas:fullscreen .scoreContent {
+  font-size: 2rem;
+  padding: 0.8rem 1.5rem;
+}
+
+.instructions {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 1.2rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0.8;
+}
+
+.gameCanvas:fullscreen .instructions {
+  font-size: 1.8rem;
+  bottom: 40px;
+  padding: 0.8rem 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .instructions {
+    font-size: 1rem;
+    bottom: 15px;
+  }
+
+  .gameCanvas:fullscreen .instructions {
+    font-size: 1.4rem;
+    bottom: 30px;
+  }
+}
+
+/* Add mobile landscape specific styles */
+@media (max-width: 768px) and (orientation: landscape) {
+  .beholder {
+    transform: scale(0.6) translate(-50%, -50%);
+  }
+
+  .beholderImage {
+    width: 180px;
+    height: 180px;
+  }
+
+  .shadow {
+    width: 180px;
+    height: 30px;
+  }
+
+  .shieldIndicator {
+    bottom: 5px;
+    width: 180px;
+    height: 36px;
+  }
+
+  .shieldText {
+    font-size: 0.8rem;
+  }
+
+  .gameCanvas:fullscreen .beholder {
+    transform: scale(0.7) translate(-50%, -50%);
+  }
+
+  .gameCanvas:fullscreen .beholderImage {
+    width: 300px;
+    height: 300px;
+  }
+
+  .gameCanvas:fullscreen .shadow {
+    width: 300px;
+    height: 50px;
+  }
+
+  .gameCanvas:fullscreen .shieldIndicator {
+    bottom: 10px;
+    width: 280px;
+    height: 56px;
+  }
+
+  .gameCanvas:fullscreen .shieldText {
+    font-size: 1.2rem;
+  }
 } 

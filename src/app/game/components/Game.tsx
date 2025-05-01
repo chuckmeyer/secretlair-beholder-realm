@@ -15,11 +15,11 @@ const EYE_STALKS = [
 
 // Difficulty settings
 const DIFFICULTY_LEVELS = [
-  { beamDelay: { min: 2000, max: 10000 }, warningDuration: 300, floatSpeed: 6 },
-  { beamDelay: { min: 1500, max: 8000 }, warningDuration: 250, floatSpeed: 5 },
-  { beamDelay: { min: 1000, max: 6000 }, warningDuration: 200, floatSpeed: 4 },
-  { beamDelay: { min: 800, max: 4000 }, warningDuration: 150, floatSpeed: 3 },
-  { beamDelay: { min: 600, max: 3000 }, warningDuration: 100, floatSpeed: 2 },
+  { beamDelay: { min: 2000, max: 10000 }, warningDuration: 200, floatSpeed: 6 },
+  { beamDelay: { min: 1500, max: 8000 }, warningDuration: 150, floatSpeed: 5 },
+  { beamDelay: { min: 1000, max: 6000 }, warningDuration: 100, floatSpeed: 4 },
+  { beamDelay: { min: 800, max: 4000 }, warningDuration: 75, floatSpeed: 3 },
+  { beamDelay: { min: 600, max: 3000 }, warningDuration: 50, floatSpeed: 2 },
 ];
 
 export default function Game() {
@@ -34,6 +34,9 @@ export default function Game() {
   const [blockedCount, setBlockedCount] = useState<number>(0)
   const [isGameOver, setIsGameOver] = useState<boolean>(false)
   const [difficultyLevel, setDifficultyLevel] = useState<number>(0)
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
+  const gameCanvasRef = useRef<HTMLDivElement>(null)
+  const [isTouchDevice, setIsTouchDevice] = useState<boolean>(false)
 
   // Add refs for our timers
   const beamTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -67,6 +70,14 @@ export default function Game() {
   // Add state for frame flash
   const [isFrameFlashing, setIsFrameFlashing] = useState<boolean>(false)
 
+  // Add a new ref for shootBeam
+  const shootBeamRef = useRef<() => void>(() => {})
+
+  // Add effect to detect touch device
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window)
+  }, [])
+
   // Clear all timers helper
   const clearAllTimers = useCallback(() => {
     if (beamTimerRef.current) clearTimeout(beamTimerRef.current)
@@ -85,6 +96,14 @@ export default function Game() {
   }, [difficultyLevel])
 
   // Declare shootBeam and scheduleNextBeam with proper types
+  const scheduleNextBeam = useCallback((): void => {
+    if (isGameOver) return
+    clearAllTimers() // Clear any existing timers before scheduling new one
+    const currentDifficulty = getCurrentDifficulty()
+    const delay = Math.random() * (currentDifficulty.beamDelay.max - currentDifficulty.beamDelay.min) + currentDifficulty.beamDelay.min
+    beamTimerRef.current = setTimeout(() => shootBeamRef.current?.(), delay)
+  }, [isGameOver, clearAllTimers, getCurrentDifficulty])
+
   const shootBeam = useCallback((): void => {
     if (isGameOver) return
 
@@ -95,6 +114,7 @@ export default function Game() {
     // Set the beam color as a CSS variable
     if (gameAreaRef.current) {
       gameAreaRef.current.style.setProperty('--beam-color', eyeStalk.color);
+      gameAreaRef.current.style.setProperty('--flash-color', eyeStalk.color);
     }
     
     const currentDifficulty = getCurrentDifficulty()
@@ -131,15 +151,12 @@ export default function Game() {
         }
       }, 200)
     }, currentDifficulty.warningDuration)
-  }, [isGameOver, getCurrentDifficulty])
+  }, [isGameOver, getCurrentDifficulty, scheduleNextBeam])
 
-  const scheduleNextBeam = useCallback((): void => {
-    if (isGameOver) return
-    clearAllTimers() // Clear any existing timers before scheduling new one
-    const currentDifficulty = getCurrentDifficulty()
-    const delay = Math.random() * (currentDifficulty.beamDelay.max - currentDifficulty.beamDelay.min) + currentDifficulty.beamDelay.min
-    beamTimerRef.current = setTimeout(shootBeam, delay)
-  }, [isGameOver, clearAllTimers, shootBeam, getCurrentDifficulty])
+  // Store the shootBeam function in the ref
+  useEffect(() => {
+    shootBeamRef.current = shootBeam
+  }, [shootBeam])
 
   // Game initialization
   useEffect(() => {
@@ -305,7 +322,12 @@ export default function Game() {
 
   // Add touch event handlers
   const handleTouchStart = useCallback((event: React.TouchEvent) => {
-    event.preventDefault() // Prevent default touch behavior
+    // Only prevent default if it's not the fullscreen button
+    const target = event.target as HTMLElement;
+    if (!target.closest(`.${styles.fullscreenButton}`)) {
+      event.preventDefault();
+    }
+    
     if (!isSpacebarDown) {
       setIsSpacebarDown(true)
       
@@ -324,16 +346,42 @@ export default function Game() {
         setIsSpacebarDown(false)
         setBeamStyle(null)
         clearAllTimers()
-        scheduleNextBeam()
+        if (shieldTimerRef.current) {
+          clearTimeout(shieldTimerRef.current)
+          shieldTimerRef.current = null
+        }
+        setTimeout(() => {
+          scheduleNextBeam()
+        }, 100)
         return
       }
 
-      if (canBlock) {
-        setCanBlock(false)
-        setBlockedCount(prev => prev + 1)
+      if (!isGameOver) {
+        // Clear any existing shield timer
+        if (shieldTimerRef.current) {
+          clearTimeout(shieldTimerRef.current)
+          shieldTimerRef.current = null
+        }
+        
+        // Activate shield and animation
         setIsShieldAnimating(true)
         setAnimationKey(prev => prev + 1)
-        setTimeout(() => {
+        
+        // Check for block immediately
+        if (canBlock) {
+          setBlockedCount(prev => prev + 1)
+          setCanBlock(false)
+          setIsScoreAnimating(true)  // Start score animation
+          setScoreAnimationKey(prev => prev + 1)  // Force animation restart
+          
+          // Reset score animation after it completes
+          setTimeout(() => {
+            setIsScoreAnimating(false)
+          }, 1000)
+        }
+
+        // Set shield timer to deactivate after 1 second
+        shieldTimerRef.current = setTimeout(() => {
           setIsShieldAnimating(false)
         }, 1000)
       }
@@ -341,89 +389,182 @@ export default function Game() {
   }, [isSpacebarDown, isGameOver, canRestart, canBlock, clearAllTimers, scheduleNextBeam])
 
   const handleTouchEnd = useCallback((event: React.TouchEvent) => {
-    event.preventDefault()
+    // Only prevent default if it's not the fullscreen button
+    const target = event.target as HTMLElement;
+    if (!target.closest(`.${styles.fullscreenButton}`)) {
+      event.preventDefault();
+    }
     setIsSpacebarDown(false)
+  }, [])
+
+  const toggleFullscreen = useCallback((event: React.MouseEvent | React.TouchEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (!document.fullscreenElement) {
+      gameCanvasRef.current?.requestFullscreen().then(() => {
+        setIsFullscreen(true)
+        // Try to lock screen orientation to landscape on mobile
+        if (screen.orientation && 'lock' in screen.orientation) {
+          (screen.orientation as any).lock('landscape').catch((err: Error) => {
+            console.log('Screen orientation lock not supported:', err);
+          });
+        }
+      }).catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`)
+      })
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false)
+        // Unlock screen orientation when exiting fullscreen
+        if (screen.orientation && 'unlock' in screen.orientation) {
+          (screen.orientation as any).unlock();
+        }
+      }).catch(err => {
+        console.error(`Error attempting to exit fullscreen: ${err.message}`)
+      })
+    }
+  }, [])
+
+  // Add effect to handle orientation changes
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      if (document.fullscreenElement && screen.orientation) {
+        // If we're in fullscreen and the orientation changes to portrait,
+        // try to lock it back to landscape
+        if (screen.orientation.type.includes('portrait')) {
+          (screen.orientation as any).lock('landscape').catch((err: Error) => {
+            console.log('Screen orientation lock not supported:', err);
+          });
+        }
+      }
+    };
+
+    window.addEventListener('orientationchange', handleOrientationChange);
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
+
+  // Add fullscreen change listener
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
   }, [])
 
   return (
     <div 
       ref={gameAreaRef} 
-      className={`${styles.gameArea} ${isWarningFlash ? styles.warningFlash : ''} ${isFrameFlashing ? styles.frameFlash : ''}`}
+      className={`${styles.gameArea} ${isFrameFlashing ? styles.frameFlash : ''}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className={styles.backgroundLayer}>
-        <div className={styles.fogContainer}>
-          <div className={styles.fogLayer1} />
-          <div className={styles.fogLayer2} />
-          <div className={styles.fogLayer3} />
+      <button 
+        onClick={toggleFullscreen}
+        onTouchStart={toggleFullscreen}
+        className={styles.fullscreenButton}
+        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+      >
+        {isFullscreen ? "⤓" : "⤢"}
+      </button>
+      <div 
+        ref={gameCanvasRef} 
+        className={`${styles.gameCanvas} ${isWarningFlash ? styles.warningFlash : ''}`}
+      >
+        <div className={styles.backgroundLayer}>
+          <Image
+            src="/images/beholder_lair.png"
+            alt="Beholder's Lair Background"
+            fill
+            priority
+            className={styles.backgroundImageContent}
+          />
+          <div className={styles.fogContainer}>
+            <div className={styles.fogLayer1} />
+            <div className={styles.fogLayer2} />
+            <div className={styles.fogLayer3} />
+          </div>
         </div>
-      </div>
-      <div ref={beholderRef} className={styles.beholder}>
-        <Image 
-          src={isGameOver ? "/images/beholder_closed.png" : "/images/beholder_blink_loop.gif"} 
-          alt="Beholder"
-          width={300}
-          height={300}
-          priority
-          className={styles.beholderImage}
-        />
-        {activeEyeStalk && isBeamActive && (
-          <>
-            <div 
-              className={styles.eyeGlow}
-              style={{
-                top: activeEyeStalk.top,
-                left: activeEyeStalk.left,
-                background: `radial-gradient(circle, ${activeEyeStalk.color}dd 0%, ${activeEyeStalk.color}88 30%, ${activeEyeStalk.color}44 60%, transparent 100%)`
-              }}
-            />
-            <div 
-              className={styles.beamContainer}
-              style={{
-                top: activeEyeStalk.top,
-                left: activeEyeStalk.left,
-              }}
-            >
+        <div ref={beholderRef} className={styles.beholder}>
+          <Image 
+            src={isGameOver ? "/images/beholder_closed.png" : "/images/beholder_blink_loop.gif"} 
+            alt="Beholder"
+            width={300}
+            height={300}
+            priority
+            className={styles.beholderImage}
+          />
+          {activeEyeStalk && isBeamActive && (
+            <>
               <div 
-                className={styles.eyeBeam}
+                className={styles.eyeGlow}
                 style={{
-                  height: `${beamStyle?.length}px`,
-                  background: activeEyeStalk.color
+                  top: activeEyeStalk.top,
+                  left: activeEyeStalk.left,
+                  background: `radial-gradient(circle, ${activeEyeStalk.color}dd 0%, ${activeEyeStalk.color}88 30%, ${activeEyeStalk.color}44 60%, transparent 100%)`
                 }}
               />
-            </div>
-          </>
+              <div 
+                className={styles.beamContainer}
+                style={{
+                  top: activeEyeStalk.top,
+                  left: activeEyeStalk.left,
+                }}
+              >
+                <div 
+                  className={styles.eyeBeam}
+                  style={{
+                    height: `${beamStyle?.length}px`,
+                    background: activeEyeStalk.color
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </div>
+        <div className={styles.shadow} />
+        <div className={styles.whiteFogOverlay} />
+        {isGameOver && (
+          <div className={styles.gameOverOverlay}>
+            <div className={styles.gameOverText}>Game Over</div>
+            {canRestart && (
+              <div className={styles.retryText}>
+                {isTouchDevice ? 'Tap to retry' : 'Press SPACE to retry'}
+              </div>
+            )}
+          </div>
         )}
-      </div>
-      <div className={styles.shadow} />
-      <div className={styles.whiteFogOverlay} />
-      {isGameOver && (
-        <div className={styles.gameOverOverlay}>
-          <div className={styles.gameOverText}>Game Over</div>
-          {canRestart && <div className={styles.retryText}>Press SPACE to retry</div>}
+        <div className={styles.levelContainer}>
+          <div 
+            key={levelAnimationKey}
+            className={`${styles.levelContent} ${isLevelAnimating ? styles.scoreAnimate : ''}`}
+          >
+            Level: {difficultyLevel + 1}
+          </div>
         </div>
-      )}
-      <div className={styles.levelContainer}>
+        <div className={styles.scoreContainer}>
+          <div 
+            key={scoreAnimationKey}
+            className={`${styles.scoreContent} ${isScoreAnimating ? styles.scoreAnimate : ''}`}
+          >
+            Blocked: {blockedCount}
+          </div>
+        </div>
         <div 
-          key={levelAnimationKey}
-          className={`${styles.levelContent} ${isLevelAnimating ? styles.scoreAnimate : ''}`}
+          key={animationKey}
+          className={`${styles.shieldIndicator} ${isShieldAnimating ? styles.shieldActive : ''}`}
         >
-          Level: {difficultyLevel + 1}
+          <div className={styles.shieldText}>
+            {isTouchDevice ? 'Tap to block beams' : 'Press SPACE to block beams'}
+          </div>
         </div>
       </div>
-      <div className={styles.scoreContainer}>
-        <div 
-          key={scoreAnimationKey}
-          className={`${styles.scoreContent} ${isScoreAnimating ? styles.scoreAnimate : ''}`}
-        >
-          Blocked: {blockedCount}
-        </div>
-      </div>
-      <div 
-        key={animationKey}
-        className={`${styles.shieldIndicator} ${isShieldAnimating ? styles.shieldActive : ''}`}
-      />
     </div>
   )
-} 
+}

@@ -28,10 +28,6 @@ export default function GamePage() {
             <Game />
           </div>
         </div>
-        <div className={styles.instructions}>
-          <p>Press SPACE or tap to block the beams!</p>
-          <p className={styles.mobileNote}>Tap anywhere on the screen to play on mobile</p>
-        </div>
       </div>
     </main>
   )
