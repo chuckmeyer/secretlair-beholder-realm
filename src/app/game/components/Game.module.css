@@ -53,7 +53,7 @@
   left: 50%;
   top: 40%;
   transform: translate(-50%, -50%);
-  animation: float 6s ease-in-out infinite;
+  animation: float var(--float-duration, 6s) ease-in-out infinite;
   z-index: 3;
   isolation: isolate;
   will-change: transform;
@@ -70,7 +70,7 @@
   top: 70%;
   transform: translateX(-50%);
   filter: blur(8px);
-  animation: shadowFloat 6s ease-in-out infinite;
+  animation: shadowFloat var(--float-duration, 6s) ease-in-out infinite;
   transform-origin: center;
   z-index: 2;
 }
@@ -531,4 +531,22 @@
   pointer-events: none;  /* Allow clicks to pass through */
   z-index: 5;  /* Above other elements but below game over screen */
   mix-blend-mode: soft-light;  /* Gentle blend with underlying elements */
+}
+
+.levelContainer {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 4;
+}
+
+.levelContent {
+  color: white;
+  font-size: 1.2rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 } 

@@ -13,6 +13,15 @@ const EYE_STALKS = [
   { top: '42%', left: '25%', color: '#00ffff' },    // Cyan, left
 ];
 
+// Difficulty settings
+const DIFFICULTY_LEVELS = [
+  { beamDelay: { min: 2000, max: 10000 }, warningDuration: 300, floatSpeed: 6 },
+  { beamDelay: { min: 1500, max: 8000 }, warningDuration: 250, floatSpeed: 5 },
+  { beamDelay: { min: 1000, max: 6000 }, warningDuration: 200, floatSpeed: 4 },
+  { beamDelay: { min: 800, max: 4000 }, warningDuration: 150, floatSpeed: 3 },
+  { beamDelay: { min: 600, max: 3000 }, warningDuration: 100, floatSpeed: 2 },
+];
+
 export default function Game() {
   const gameAreaRef = useRef<HTMLDivElement>(null)
   const beholderRef = useRef<HTMLDivElement>(null)
@@ -24,6 +33,7 @@ export default function Game() {
   const [canBlock, setCanBlock] = useState<boolean>(false)
   const [blockedCount, setBlockedCount] = useState<number>(0)
   const [isGameOver, setIsGameOver] = useState<boolean>(false)
+  const [difficultyLevel, setDifficultyLevel] = useState<number>(0)
 
   // Add refs for our timers
   const beamTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -50,6 +60,10 @@ export default function Game() {
   const [scoreAnimationKey, setScoreAnimationKey] = useState<number>(0)
   const [isScoreAnimating, setIsScoreAnimating] = useState<boolean>(false)
 
+  // Add state for level animation
+  const [levelAnimationKey, setLevelAnimationKey] = useState<number>(0)
+  const [isLevelAnimating, setIsLevelAnimating] = useState<boolean>(false)
+
   // Add state for frame flash
   const [isFrameFlashing, setIsFrameFlashing] = useState<boolean>(false)
 
@@ -65,6 +79,11 @@ export default function Game() {
     }
   }, [])
 
+  // Get current difficulty settings
+  const getCurrentDifficulty = useCallback(() => {
+    return DIFFICULTY_LEVELS[Math.min(difficultyLevel, DIFFICULTY_LEVELS.length - 1)]
+  }, [difficultyLevel])
+
   // Declare shootBeam and scheduleNextBeam with proper types
   const shootBeam = useCallback((): void => {
     if (isGameOver) return
@@ -77,6 +96,8 @@ export default function Game() {
     if (gameAreaRef.current) {
       gameAreaRef.current.style.setProperty('--beam-color', eyeStalk.color);
     }
+    
+    const currentDifficulty = getCurrentDifficulty()
     
     warningTimerRef.current = setTimeout(() => {
       if (isGameOver) return
@@ -109,15 +130,16 @@ export default function Game() {
           scheduleNextBeam()
         }
       }, 200)
-    }, 300)
-  }, [isGameOver])
+    }, currentDifficulty.warningDuration)
+  }, [isGameOver, getCurrentDifficulty])
 
   const scheduleNextBeam = useCallback((): void => {
     if (isGameOver) return
     clearAllTimers() // Clear any existing timers before scheduling new one
-    const delay = Math.random() * 8000 + 2000  // Random delay between 2000ms (2s) and 10000ms (10s)
+    const currentDifficulty = getCurrentDifficulty()
+    const delay = Math.random() * (currentDifficulty.beamDelay.max - currentDifficulty.beamDelay.min) + currentDifficulty.beamDelay.min
     beamTimerRef.current = setTimeout(shootBeam, delay)
-  }, [isGameOver, clearAllTimers, shootBeam])
+  }, [isGameOver, clearAllTimers, shootBeam, getCurrentDifficulty])
 
   // Game initialization
   useEffect(() => {
@@ -136,6 +158,25 @@ export default function Game() {
     }
   }, [isGameOver, scheduleNextBeam, clearAllTimers])
 
+  // Update difficulty level when blocked count changes
+  useEffect(() => {
+    const newLevel = Math.floor(blockedCount / 5)
+    if (newLevel !== difficultyLevel) {
+      setDifficultyLevel(newLevel)
+      // Update CSS variable for float animation speed
+      if (gameAreaRef.current) {
+        const currentDifficulty = DIFFICULTY_LEVELS[Math.min(newLevel, DIFFICULTY_LEVELS.length - 1)]
+        gameAreaRef.current.style.setProperty('--float-duration', `${currentDifficulty.floatSpeed}s`)
+      }
+      // Trigger level animation
+      setIsLevelAnimating(true)
+      setLevelAnimationKey(prev => prev + 1)
+      setTimeout(() => {
+        setIsLevelAnimating(false)
+      }, 1000)
+    }
+  }, [blockedCount, difficultyLevel])
+
   // Split the keypress handler into keydown and keyup handlers
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -147,6 +188,7 @@ export default function Game() {
           setIsGameOver(false)
           setCanRestart(false)  // Reset the restart flag
           setBlockedCount(0)
+          setDifficultyLevel(0)  // Reset difficulty level
           setIsWarningFlash(false)
           setIsBeamActive(false)
           setActiveEyeStalk(null)
@@ -318,6 +360,14 @@ export default function Game() {
           {canRestart && <div className={styles.retryText}>Press SPACE to retry</div>}
         </div>
       )}
+      <div className={styles.levelContainer}>
+        <div 
+          key={levelAnimationKey}
+          className={`${styles.levelContent} ${isLevelAnimating ? styles.scoreAnimate : ''}`}
+        >
+          Level: {difficultyLevel + 1}
+        </div>
+      </div>
       <div className={styles.scoreContainer}>
         <div 
           key={scoreAnimationKey}
