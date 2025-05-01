@@ -22,6 +22,30 @@ const DIFFICULTY_LEVELS = [
   { beamDelay: { min: 600, max: 3000 }, warningDuration: 50, floatSpeed: 2 },
 ];
 
+// Add type definitions for Fullscreen API
+interface FullscreenDocument extends Document {
+  webkitFullscreenElement: Element | null;
+  mozFullScreenElement: Element | null;
+  msFullscreenElement: Element | null;
+  webkitExitFullscreen: () => Promise<void>;
+  mozCancelFullScreen: () => Promise<void>;
+  msExitFullscreen: () => Promise<void>;
+}
+
+interface FullscreenElement extends HTMLElement {
+  webkitRequestFullscreen: () => Promise<void>;
+  mozRequestFullScreen: () => Promise<void>;
+  msRequestFullscreen: () => Promise<void>;
+  webkitEnterFullscreen?: () => Promise<void>;
+}
+
+// Add iOS-specific types
+interface WebKitFullscreenElement extends HTMLElement {
+  webkitEnterFullscreen?: () => Promise<void>;
+  webkitExitFullscreen?: () => Promise<void>;
+  webkitDisplayingFullscreen?: boolean;
+}
+
 export default function Game() {
   const gameAreaRef = useRef<HTMLDivElement>(null)
   const beholderRef = useRef<HTMLDivElement>(null)
@@ -320,154 +344,201 @@ export default function Game() {
     root.style.setProperty('--fog3-start', `${Math.random() * 360}deg`);
   }, []); // Empty dependency array so it only runs once
 
-  // Add touch event handlers
-  const handleTouchStart = useCallback((event: React.TouchEvent) => {
-    // Only prevent default if it's not the fullscreen button
-    const target = event.target as HTMLElement;
-    if (!target.closest(`.${styles.fullscreenButton}`)) {
-      event.preventDefault();
-    }
-    
-    if (!isSpacebarDown) {
-      setIsSpacebarDown(true)
-      
-      if (isGameOver && canRestart) {
-        // Reset all game states
-        setIsGameOver(false)
-        setCanRestart(false)
-        setBlockedCount(0)
-        setDifficultyLevel(0)
-        setIsWarningFlash(false)
-        setIsBeamActive(false)
-        setActiveEyeStalk(null)
-        setCanBlock(false)
-        setIsShieldAnimating(false)
-        setAnimationKey(prev => prev + 1)
-        setIsSpacebarDown(false)
-        setBeamStyle(null)
-        clearAllTimers()
-        if (shieldTimerRef.current) {
-          clearTimeout(shieldTimerRef.current)
-          shieldTimerRef.current = null
-        }
-        setTimeout(() => {
-          scheduleNextBeam()
-        }, 100)
-        return
-      }
+  // Add effect to set up touch event listeners with passive: false
+  useEffect(() => {
+    const gameArea = gameAreaRef.current;
+    if (!gameArea) return;
 
-      if (!isGameOver) {
-        // Clear any existing shield timer
-        if (shieldTimerRef.current) {
-          clearTimeout(shieldTimerRef.current)
-          shieldTimerRef.current = null
-        }
+    const touchStartHandler = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest(`.${styles.fullscreenButton}`)) {
+        return;
+      }
+      e.preventDefault();
+      
+      if (!isSpacebarDown) {
+        setIsSpacebarDown(true)
         
-        // Activate shield and animation
-        setIsShieldAnimating(true)
-        setAnimationKey(prev => prev + 1)
-        
-        // Check for block immediately
-        if (canBlock) {
-          setBlockedCount(prev => prev + 1)
+        if (isGameOver && canRestart) {
+          // Reset all game states
+          setIsGameOver(false)
+          setCanRestart(false)
+          setBlockedCount(0)
+          setDifficultyLevel(0)
+          setIsWarningFlash(false)
+          setIsBeamActive(false)
+          setActiveEyeStalk(null)
           setCanBlock(false)
-          setIsScoreAnimating(true)  // Start score animation
-          setScoreAnimationKey(prev => prev + 1)  // Force animation restart
-          
-          // Reset score animation after it completes
+          setIsShieldAnimating(false)
+          setAnimationKey(prev => prev + 1)
+          setIsSpacebarDown(false)
+          setBeamStyle(null)
+          clearAllTimers()
+          if (shieldTimerRef.current) {
+            clearTimeout(shieldTimerRef.current)
+            shieldTimerRef.current = null
+          }
           setTimeout(() => {
-            setIsScoreAnimating(false)
+            scheduleNextBeam()
+          }, 100)
+          return
+        }
+
+        if (!isGameOver) {
+          // Clear any existing shield timer
+          if (shieldTimerRef.current) {
+            clearTimeout(shieldTimerRef.current)
+            shieldTimerRef.current = null
+          }
+          
+          // Activate shield and animation
+          setIsShieldAnimating(true)
+          setAnimationKey(prev => prev + 1)
+          
+          // Check for block immediately
+          if (canBlock) {
+            setBlockedCount(prev => prev + 1)
+            setCanBlock(false)
+            setIsScoreAnimating(true)  // Start score animation
+            setScoreAnimationKey(prev => prev + 1)  // Force animation restart
+            
+            // Reset score animation after it completes
+            setTimeout(() => {
+              setIsScoreAnimating(false)
+            }, 1000)
+          }
+
+          // Set shield timer to deactivate after 1 second
+          shieldTimerRef.current = setTimeout(() => {
+            setIsShieldAnimating(false)
           }, 1000)
         }
-
-        // Set shield timer to deactivate after 1 second
-        shieldTimerRef.current = setTimeout(() => {
-          setIsShieldAnimating(false)
-        }, 1000)
-      }
-    }
-  }, [isSpacebarDown, isGameOver, canRestart, canBlock, clearAllTimers, scheduleNextBeam])
-
-  const handleTouchEnd = useCallback((event: React.TouchEvent) => {
-    // Only prevent default if it's not the fullscreen button
-    const target = event.target as HTMLElement;
-    if (!target.closest(`.${styles.fullscreenButton}`)) {
-      event.preventDefault();
-    }
-    setIsSpacebarDown(false)
-  }, [])
-
-  const toggleFullscreen = useCallback((event: React.MouseEvent | React.TouchEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    if (!document.fullscreenElement) {
-      gameCanvasRef.current?.requestFullscreen().then(() => {
-        setIsFullscreen(true)
-        // Try to lock screen orientation to landscape on mobile
-        if (screen.orientation && 'lock' in screen.orientation) {
-          (screen.orientation as any).lock('landscape').catch((err: Error) => {
-            console.log('Screen orientation lock not supported:', err);
-          });
-        }
-      }).catch(err => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`)
-      })
-    } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false)
-        // Unlock screen orientation when exiting fullscreen
-        if (screen.orientation && 'unlock' in screen.orientation) {
-          (screen.orientation as any).unlock();
-        }
-      }).catch(err => {
-        console.error(`Error attempting to exit fullscreen: ${err.message}`)
-      })
-    }
-  }, [])
-
-  // Add effect to handle orientation changes
-  useEffect(() => {
-    const handleOrientationChange = () => {
-      if (document.fullscreenElement && screen.orientation) {
-        // If we're in fullscreen and the orientation changes to portrait,
-        // try to lock it back to landscape
-        if (screen.orientation.type.includes('portrait')) {
-          (screen.orientation as any).lock('landscape').catch((err: Error) => {
-            console.log('Screen orientation lock not supported:', err);
-          });
-        }
       }
     };
 
-    window.addEventListener('orientationchange', handleOrientationChange);
+    const touchEndHandler = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest(`.${styles.fullscreenButton}`)) {
+        return;
+      }
+      e.preventDefault();
+      setIsSpacebarDown(false)
+    };
+
+    const touchMoveHandler = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`.${styles.fullscreenButton}`)) {
+        e.preventDefault();
+      }
+    };
+
+    // Add touch event listeners with passive: false
+    gameArea.addEventListener('touchstart', touchStartHandler, { passive: false });
+    gameArea.addEventListener('touchend', touchEndHandler, { passive: false });
+    gameArea.addEventListener('touchmove', touchMoveHandler, { passive: false });
+
     return () => {
-      window.removeEventListener('orientationchange', handleOrientationChange);
+      gameArea.removeEventListener('touchstart', touchStartHandler);
+      gameArea.removeEventListener('touchend', touchEndHandler);
+      gameArea.removeEventListener('touchmove', touchMoveHandler);
     };
-  }, []);
+  }, [isSpacebarDown, isGameOver, canRestart, canBlock, clearAllTimers, scheduleNextBeam]);
 
-  // Add fullscreen change listener
+  const toggleFullscreen = async () => {
+    if (!gameCanvasRef.current) return;
+
+    try {
+      if (isFullscreen) {
+        const doc = document as FullscreenDocument;
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (doc.webkitExitFullscreen) {
+          await doc.webkitExitFullscreen();
+        }
+        // Exit presentation mode for iOS
+        const webkitElement = gameCanvasRef.current as WebKitFullscreenElement;
+        if (webkitElement.webkitExitFullscreen) {
+          await webkitElement.webkitExitFullscreen();
+        }
+      } else {
+        const element = gameCanvasRef.current as unknown as FullscreenElement;
+        const webkitElement = gameCanvasRef.current as WebKitFullscreenElement;
+        
+        // Try iOS-specific presentation mode first
+        if (webkitElement.webkitEnterFullscreen) {
+          try {
+            await webkitElement.webkitEnterFullscreen();
+            setIsFullscreen(true);
+            return;
+          } catch {
+            console.log('iOS presentation mode failed, falling back to standard fullscreen');
+          }
+        }
+
+        // Fall back to standard methods
+        if (element.requestFullscreen) {
+          await element.requestFullscreen();
+        } else if (element.webkitRequestFullscreen) {
+          await element.webkitRequestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+          await element.mozRequestFullScreen();
+        } else if (element.msRequestFullscreen) {
+          await element.msRequestFullscreen();
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling fullscreen:', error);
+    }
+  };
+
+  // Update fullscreen change listener to handle iOS presentation mode
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
+      const doc = document as FullscreenDocument;
+      const isInFullscreen = !!document.fullscreenElement || 
+                            !!doc.webkitFullscreenElement || 
+                            !!doc.mozFullScreenElement || 
+                            !!doc.msFullscreenElement;
+      
+      // Check for iOS presentation mode
+      const webkitElement = gameCanvasRef.current as WebKitFullscreenElement;
+      const isInPresentationMode = webkitElement?.webkitDisplayingFullscreen;
+      
+      setIsFullscreen(isInFullscreen || !!isInPresentationMode);
+    };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    // Add iOS-specific event listener
+    const currentCanvas = gameCanvasRef.current;
+    if (currentCanvas) {
+      currentCanvas.addEventListener('webkitbeginfullscreen', handleFullscreenChange);
+      currentCanvas.addEventListener('webkitendfullscreen', handleFullscreenChange);
     }
-  }, [])
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      
+      if (currentCanvas) {
+        currentCanvas.removeEventListener('webkitbeginfullscreen', handleFullscreenChange);
+        currentCanvas.removeEventListener('webkitendfullscreen', handleFullscreenChange);
+      }
+    };
+  }, []);
 
   return (
     <div 
       ref={gameAreaRef} 
       className={`${styles.gameArea} ${isFrameFlashing ? styles.frameFlash : ''}`}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
     >
       <button 
         onClick={toggleFullscreen}
-        onTouchStart={toggleFullscreen}
         className={styles.fullscreenButton}
         aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
       >

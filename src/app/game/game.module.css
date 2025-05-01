@@ -166,23 +166,20 @@
   color: white;
   text-decoration: none;
   font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: transform 0.3s ease;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.3);
   padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.5);
   border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  z-index: 1000;
 }
 
 .backLink:hover {
-  transform: translateX(-5px);
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.05);
 }
 
 .arrow {
-  font-size: 1.5rem;
+  margin-right: 0.5rem;
 }
 
 .mobileNote {

@@ -18,6 +18,17 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.2);
   z-index: 1;
+  overflow: hidden;
+}
+
+.backgroundImageContent {
+  object-fit: cover;
+  object-position: center;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .warningFlash {
@@ -37,17 +48,27 @@
   pointer-events: none;
 }
 
-.gameCanvas:fullscreen {
+.gameCanvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
   background: transparent;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.gameCanvas:fullscreen {
   position: fixed;
   top: 0;
   left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .gameCanvas:fullscreen .gameArea {
@@ -57,6 +78,18 @@
   position: fixed;
   top: 0;
   left: 0;
+  overflow: hidden;
+}
+
+.gameCanvas:fullscreen .backgroundLayer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  overflow: hidden;
 }
 
 .gameCanvas:fullscreen .warningFlash::before {
@@ -151,12 +184,70 @@
 
 .eyeBeam {
   position: absolute;
-  width: 2px;
+  width: 8px;
+  height: 100%;
+  background: var(--beam-color);
   transform-origin: top center;
-  animation: shootBeam 200ms linear forwards;
-  filter: blur(1px);
-  left: -1px;
+  filter: blur(3px);
+  left: -4px;
+  box-shadow: 
+    0 0 10px var(--beam-color),
+    0 0 20px var(--beam-color),
+    0 0 30px var(--beam-color);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  opacity: 0.7;
+}
+
+.eyeBeam::after {
+  content: '';
+  position: absolute;
   top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, 
+    transparent 0%,
+    var(--beam-color) 20%,
+    var(--beam-color) 80%,
+    transparent 100%
+  );
+  filter: blur(2px);
+  transform: scaleY(2.2);
+  transform-origin: top;
+  box-shadow: 
+    0 0 15px var(--beam-color),
+    0 0 30px var(--beam-color);
+  opacity: 0.6;
+}
+
+.eyeBeam::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center,
+    var(--beam-color) 0%,
+    transparent 70%
+  );
+  opacity: 0.3;
+  animation: particleFloat 2s linear infinite;
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-40px) scale(1);
+    opacity: 0.3;
+  }
 }
 
 .beholderImage {
@@ -350,10 +441,10 @@
 
 .shieldIndicator {
   position: absolute;
+  bottom: 5px;
   left: 50%;
-  bottom: 10px;
   transform: translateX(-50%);
-  width: 200px;
+  width: 280px;
   height: 40px;
   border-radius: 100px 100px 0 0;
   background: rgba(144, 238, 144, 0.2);
@@ -364,6 +455,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.shieldIndicator.shieldActive {
+  background: rgba(152, 251, 152, 0.9);
+  box-shadow: 
+    0 0 20px rgba(144, 238, 144, 0.9),
+    0 0 40px rgba(144, 238, 144, 0.6),
+    inset 0 0 20px rgba(144, 238, 144, 0.9);
+  animation: shieldPulse 3s ease-out forwards;
 }
 
 .shieldText {
@@ -685,14 +785,6 @@
   }
 }
 
-.gameCanvas {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  z-index: 2;
-}
-
 .gameCanvas:fullscreen .beholder {
   transform: scale(1.2);
 }
@@ -738,16 +830,6 @@
 }
 
 /* Fullscreen adjustments */
-.gameCanvas:fullscreen .backgroundLayer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.2);
-  z-index: 1;
-}
-
 .gameCanvas:fullscreen .fogContainer {
   position: fixed;
   width: 100vw;
@@ -774,10 +856,34 @@
 }
 
 .gameCanvas:fullscreen .shieldIndicator {
-  width: 333px;
+  width: 400px;
   height: 67px;
-  bottom: 20px;
+  bottom: 10px;
   box-shadow: 0 0 30px rgba(144, 238, 144, 0.2);
+}
+
+.gameCanvas:fullscreen .eyeBeam {
+  width: 12px;
+  left: -6px;
+  filter: blur(4px);
+  box-shadow: 
+    0 0 15px var(--beam-color),
+    0 0 30px var(--beam-color),
+    0 0 45px var(--beam-color);
+  opacity: 0.75;
+}
+
+.gameCanvas:fullscreen .eyeBeam::after {
+  filter: blur(3px);
+  transform: scaleY(2.8);
+  box-shadow: 
+    0 0 20px var(--beam-color),
+    0 0 40px var(--beam-color);
+  opacity: 0.65;
+}
+
+.gameCanvas:fullscreen .eyeBeam::before {
+  animation: particleFloat 3s linear infinite;
 }
 
 .gameCanvas:fullscreen .levelContainer {
@@ -851,8 +957,8 @@
   }
 
   .shieldIndicator {
-    bottom: 5px;
-    width: 180px;
+    bottom: 2px;
+    width: 240px;
     height: 36px;
   }
 
@@ -875,12 +981,73 @@
   }
 
   .gameCanvas:fullscreen .shieldIndicator {
-    bottom: 10px;
-    width: 280px;
+    bottom: 5px;
+    width: 320px;
     height: 56px;
   }
 
   .gameCanvas:fullscreen .shieldText {
     font-size: 1.2rem;
+  }
+
+  .backgroundLayer {
+    overflow: hidden;
+  }
+
+  .backgroundImageContent {
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .eyeBeam {
+    width: 6px;
+    left: -3px;
+    filter: blur(2.5px);
+    box-shadow: 
+      0 0 8px var(--beam-color),
+      0 0 16px var(--beam-color),
+      0 0 24px var(--beam-color);
+    opacity: 0.65;
+  }
+
+  .gameCanvas:fullscreen .eyeBeam {
+    width: 10px;
+    left: -5px;
+    filter: blur(3.5px);
+    box-shadow: 
+      0 0 12px var(--beam-color),
+      0 0 24px var(--beam-color),
+      0 0 36px var(--beam-color);
+    opacity: 0.7;
+  }
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .gameCanvas:fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .gameCanvas:fullscreen .gameArea {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .gameCanvas:fullscreen .backgroundLayer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
   }
 } 
