@@ -237,14 +237,13 @@ export default function Game() {
         const eyeX = parseFloat(activeEyeStalk.left) / 100 * gameRect.width
         const eyeY = parseFloat(activeEyeStalk.top) / 100 * gameRect.height
 
-        // Target point is exactly at bottom center
+        // Target point is at bottom center, 10px from bottom
         const targetX = gameRect.width / 2
-        const targetY = gameRect.height
+        const targetY = gameRect.height - 10  // Adjusted to match new shield position
 
         // Calculate angle and length for the beam
         const deltaX = targetX - eyeX
         const deltaY = targetY - eyeY
-        // Adjust angle calculation to point downward
         const angle = (Math.atan2(deltaY, deltaX) * (180 / Math.PI)) - 90
         const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
