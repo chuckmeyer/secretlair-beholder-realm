@@ -4,10 +4,10 @@
   min-height: 100vh;
   background: linear-gradient(
     135deg,
-    #0066cc 0%,
-    #0066cc 60%,
-    #4d94ff 100%
-  );
+    #000000 0%,
+    #1a1a1a 50%,
+    #000000 100%
+  );  /* Subtle gradient from pure black to very dark gray and back */
   padding: 2rem;
   position: relative;
 }
