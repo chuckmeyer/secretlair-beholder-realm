@@ -105,6 +105,9 @@
   height: 200%;
   pointer-events: none;
   mix-blend-mode: screen;
+  transform-origin: center;
+  will-change: transform;
+  z-index: 1;
 }
 
 .fogLayer1 {
@@ -113,8 +116,7 @@
     rgba(128, 0, 255, 0.1) 50%,
     rgba(138, 43, 226, 0.2) 100%
   );
-  animation: fogSwirl1 40s linear infinite;
-  z-index: 1;
+  animation: fogSwirl1 120s linear infinite;
 }
 
 .fogLayer2 {
@@ -123,8 +125,7 @@
     rgba(147, 112, 219, 0.1) 50%,
     rgba(138, 43, 226, 0.15) 100%
   );
-  animation: fogSwirl2 50s linear infinite;
-  z-index: 1;
+  animation: fogSwirl2 180s linear infinite;
 }
 
 .fogLayer3 {
@@ -133,26 +134,22 @@
     rgba(186, 85, 211, 0.1) 50%,
     rgba(147, 112, 219, 0.15) 100%
   );
-  animation: fogSwirl3 60s linear infinite;
-  z-index: 1;
+  animation: fogSwirl3 240s linear infinite;
 }
 
 @keyframes fogSwirl1 {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.2); }
-  100% { transform: rotate(360deg) scale(1); }
+  from { transform: rotate(0deg) scale(1); }
+  to { transform: rotate(360deg) scale(1); }
 }
 
 @keyframes fogSwirl2 {
-  0% { transform: rotate(0deg) scale(1.2); }
-  50% { transform: rotate(-180deg) scale(1); }
-  100% { transform: rotate(-360deg) scale(1.2); }
+  from { transform: rotate(0deg) scale(1.2); }
+  to { transform: rotate(-360deg) scale(1.2); }
 }
 
 @keyframes fogSwirl3 {
-  0% { transform: rotate(0deg) scale(1.1); }
-  50% { transform: rotate(180deg) scale(1); }
-  100% { transform: rotate(360deg) scale(1.1); }
+  from { transform: rotate(0deg) scale(1.1); }
+  to { transform: rotate(360deg) scale(1.1); }
 }
 
 .placeholder {

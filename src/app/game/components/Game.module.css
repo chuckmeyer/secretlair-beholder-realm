@@ -1,9 +1,3 @@
-:root {
-  --fog1-start: 0deg;
-  --fog2-start: 0deg;
-  --fog3-start: 0deg;
-}
-
 .gameArea {
   width: 100%;
   height: 100%;
@@ -391,6 +385,7 @@
     transparent 80%
   );
   animation: fogWave1 60s linear infinite;
+  transform-origin: center;
 }
 
 .fogLayer2 {
@@ -401,6 +396,7 @@
     transparent 80%
   );
   animation: fogWave2 45s linear infinite;
+  transform-origin: center;
 }
 
 .fogLayer3 {
@@ -411,6 +407,7 @@
     transparent 80%
   );
   animation: fogWave3 30s linear infinite;
+  transform-origin: center;
 }
 
 @keyframes fogWave1 {
