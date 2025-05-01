@@ -9,7 +9,7 @@ export default function GamePage() {
         <span className={styles.arrow}>←</span> Back to Home
       </Link>
       <div className={styles.gameContainer}>
-        <h1 className={styles.title}>Beholder's Realm</h1>
+        <h1 className={styles.title}>Beholder&apos;s Realm</h1>
         <div className={styles.gameCanvasWrapper}>
           <div className={styles.fogLayer1}></div>
           <div className={styles.fogLayer2}></div>

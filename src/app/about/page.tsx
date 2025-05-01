@@ -1,8 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import styles from '../page.module.css'
+import styles from './about.module.css'
 
-export default function About() {
+export default function AboutPage() {
   return (
     <main className={styles.main}>
       <Link href="/" className={styles.backLink}>
@@ -16,12 +16,9 @@ export default function About() {
           height={200}
           className={styles.profileImage}
         />
-        <h1 className={styles.title}>About Chuck Meyer</h1>
-        <p className={styles.text}>
-          Chuck Meyer is vibe coding. As a DevRel Engineer at Algolia and a search and discovery 
-          enthusiast, he's passionate about creating great developer experiences and building 
-          innovative solutions. Based in Columbus, OH, Chuck combines technical expertise with 
-          a vibrant approach to coding and developer relations.
+        <h1 className={styles.title}>About the Author</h1>
+        <p className={styles.description}>
+          Chuck Meyer is a passionate developer who loves creating interactive experiences.
         </p>
       </div>
     </main>

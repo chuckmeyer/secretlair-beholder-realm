@@ -21,7 +21,7 @@ export default function Home() {
             About the author
           </Link>
           <Link href="/game" className={styles.link}>
-            Play Beholder's Realm
+            Play Beholder&apos;s Realm
           </Link>
         </nav>
       </div>
