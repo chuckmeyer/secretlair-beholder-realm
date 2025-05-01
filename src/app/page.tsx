@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import styles from './page.module.css'
+import Disclaimer from './components/Disclaimer'
 
 export default function Home() {
   return (
@@ -25,6 +26,7 @@ export default function Home() {
           </Link>
         </nav>
       </div>
+      <Disclaimer />
     </main>
   )
 }

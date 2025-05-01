@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import styles from './game.module.css'
 import Game from './components/Game'
+import Disclaimer from '../components/Disclaimer'
 
 export default function GamePage() {
   return (
@@ -13,6 +14,7 @@ export default function GamePage() {
         <div className={styles.gameCanvasWrapper}>
           <Game />
         </div>
+        <Disclaimer />
       </div>
     </main>
   )

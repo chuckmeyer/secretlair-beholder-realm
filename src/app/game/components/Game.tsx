@@ -15,11 +15,16 @@ const EYE_STALKS = [
 
 // Difficulty settings
 const DIFFICULTY_LEVELS = [
-  { beamDelay: { min: 2000, max: 10000 }, warningDuration: 200, floatSpeed: 6 },
-  { beamDelay: { min: 1500, max: 8000 }, warningDuration: 150, floatSpeed: 5 },
-  { beamDelay: { min: 1000, max: 6000 }, warningDuration: 100, floatSpeed: 4 },
-  { beamDelay: { min: 800, max: 4000 }, warningDuration: 75, floatSpeed: 3 },
-  { beamDelay: { min: 600, max: 3000 }, warningDuration: 50, floatSpeed: 2 },
+  { beamDelay: { min: 1500, max: 8000 }, warningDuration: 200, floatSpeed: 6, impactWindow: 200 },   // Level 1
+  { beamDelay: { min: 1500, max: 6000 }, warningDuration: 150, floatSpeed: 5, impactWindow: 190 },   // Level 2
+  { beamDelay: { min: 1500, max: 5000 }, warningDuration: 100, floatSpeed: 4, impactWindow: 180 },   // Level 3
+  { beamDelay: { min: 1500, max: 4000 }, warningDuration: 75, floatSpeed: 3, impactWindow: 170 },    // Level 4
+  { beamDelay: { min: 1500, max: 3000 }, warningDuration: 50, floatSpeed: 2, impactWindow: 160 },    // Level 5
+  { beamDelay: { min: 1200, max: 2500 }, warningDuration: 45, floatSpeed: 1.8, impactWindow: 150 },  // Level 6
+  { beamDelay: { min: 1000, max: 2000 }, warningDuration: 40, floatSpeed: 1.6, impactWindow: 140 },  // Level 7
+  { beamDelay: { min: 800, max: 1800 }, warningDuration: 35, floatSpeed: 1.4, impactWindow: 135 },   // Level 8
+  { beamDelay: { min: 600, max: 1500 }, warningDuration: 30, floatSpeed: 1.2, impactWindow: 130 },   // Level 9
+  { beamDelay: { min: 500, max: 1200 }, warningDuration: 25, floatSpeed: 1, impactWindow: 125 },     // Level 10
 ];
 
 // Add type definitions for Fullscreen API
@@ -162,7 +167,7 @@ export default function Game() {
           }
           return prev
         })
-      }, 150)
+      }, currentDifficulty.impactWindow)
 
       // Clean up beam
       cleanupTimerRef.current = setTimeout(() => {

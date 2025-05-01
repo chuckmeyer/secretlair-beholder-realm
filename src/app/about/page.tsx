@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import styles from './about.module.css'
+import Disclaimer from '../components/Disclaimer'
 
 export default function AboutPage() {
   return (
@@ -21,6 +22,7 @@ export default function AboutPage() {
           Chuck Meyer is a passionate developer who loves creating interactive experiences.
         </p>
       </div>
+      <Disclaimer />
     </main>
   )
 } 
