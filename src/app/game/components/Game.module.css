@@ -62,6 +62,8 @@
   animation: float 6s ease-in-out infinite;
   z-index: 3;
   isolation: isolate;
+  will-change: transform;
+  pointer-events: none;
 }
 
 .shadow {
@@ -86,7 +88,7 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  overflow: visible; /* Allow beams to extend beyond container */
+  overflow: visible;
   z-index: 4;
 }
 
@@ -94,13 +96,6 @@
   position: absolute;
   width: 25px;
   height: 25px;
-  background: radial-gradient(
-    circle, 
-    rgba(255, 255, 100, 0.9) 0%, 
-    rgba(255, 255, 0, 0.6) 30%, 
-    rgba(255, 255, 0, 0.2) 60%,
-    transparent 100%
-  );
   border-radius: 50%;
   transform: translate(-50%, -50%);
   filter: blur(2px);
@@ -112,18 +107,17 @@
   position: absolute;
   width: 0;
   height: 0;
-  transform-origin: center;
-  overflow: visible; /* Allow beam to extend beyond container */
+  pointer-events: none;
 }
 
 .eyeBeam {
   position: absolute;
   width: 2px;
-  transform-origin: top;
+  transform-origin: top center;
   animation: shootBeam 200ms linear forwards;
   filter: blur(1px);
   left: -1px;
-  overflow: visible; /* Allow beam to extend beyond container */
+  top: 0;
 }
 
 .beholder img {
@@ -190,15 +184,15 @@
 
 @keyframes shootBeam {
   0% {
-    transform: scaleY(0);
+    transform: rotate(var(--beam-angle)) scaleY(0);
     opacity: 0;
   }
   20% {
-    transform: scaleY(0.2);
+    transform: rotate(var(--beam-angle)) scaleY(0.2);
     opacity: 1;
   }
   100% {
-    transform: scaleY(1);
+    transform: rotate(var(--beam-angle)) scaleY(1);
     opacity: 0.7;
   }
 }
@@ -219,16 +213,22 @@
   pointer-events: none;
 }
 
+.scoreAnimate {
+  animation: scorePulse 1s ease-out forwards;
+}
+
 @keyframes scorePulse {
   0%, 5% {
     background: rgba(255, 255, 255, 0.8);
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
     text-shadow: 0 0 10px rgba(255, 255, 255, 1);
+    transform: scale(1.1);
   }
   100% {
     background: rgba(0, 0, 0, 0.3);
     box-shadow: none;
     text-shadow: none;
+    transform: scale(1);
   }
 }
 
@@ -309,28 +309,38 @@
 
 .shieldIndicator {
   position: absolute;
-  bottom: 20px;
   left: 50%;
+  bottom: 20px;
   transform: translateX(-50%);
-  color: white;
-  font-size: 1.2rem;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
   z-index: 4;
   pointer-events: none;
 }
 
+.shieldActive {
+  background: white;
+  box-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.8),
+    0 0 40px rgba(255, 255, 255, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.8);
+  animation: shieldPulse 3s ease-out forwards;
+}
+
 @keyframes shieldPulse {
-  0%, 5% {
-    background: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-    text-shadow: 0 0 10px rgba(255, 255, 255, 1);
+  0% {
+    background: white;
+    box-shadow: 
+      0 0 20px rgba(255, 255, 255, 0.8),
+      0 0 40px rgba(255, 255, 255, 0.4),
+      inset 0 0 20px rgba(255, 255, 255, 0.8);
   }
   100% {
-    background: rgba(0, 0, 0, 0.3);
-    box-shadow: none;
-    text-shadow: none;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
   }
 }
 

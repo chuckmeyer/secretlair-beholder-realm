@@ -189,6 +189,12 @@ export default function Game() {
             setIsImpactFlash(true)
             setIsScoreAnimating(true)  // Start score animation
             setScoreAnimationKey(prev => prev + 1)  // Force animation restart
+            
+            // Reset score animation after it completes
+            setTimeout(() => {
+              setIsScoreAnimating(false)
+            }, 1000)
+            
             setTimeout(() => setIsImpactFlash(false), 50)
           }
 
@@ -226,25 +232,26 @@ export default function Game() {
     const updateBeamPosition = () => {
       if (activeEyeStalk && gameAreaRef.current && beholderRef.current) {
         const gameRect = gameAreaRef.current.getBoundingClientRect()
-        const beholderRect = beholderRef.current.getBoundingClientRect()
 
-        // Calculate start position relative to the beholder's position
-        const startX = beholderRect.left - gameRect.left + 
-                      (parseFloat(activeEyeStalk.left) / 100) * beholderRect.width
-        const startY = beholderRect.top - gameRect.top + 
-                      (parseFloat(activeEyeStalk.top) / 100) * beholderRect.height
+        // Get eye stalk position in pixels
+        const eyeX = parseFloat(activeEyeStalk.left) / 100 * gameRect.width
+        const eyeY = parseFloat(activeEyeStalk.top) / 100 * gameRect.height
 
-        // Target is bottom center of game area
+        // Target point is exactly at bottom center
         const targetX = gameRect.width / 2
         const targetY = gameRect.height
 
-        // Calculate angle and length from current position to target
-        const deltaX = targetX - startX
-        const deltaY = targetY - startY
-        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI) - 90
+        // Calculate angle and length for the beam
+        const deltaX = targetX - eyeX
+        const deltaY = targetY - eyeY
+        // Adjust angle calculation to point downward
+        const angle = (Math.atan2(deltaY, deltaX) * (180 / Math.PI)) - 90
+        const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
-        // Calculate length to ensure beam reaches bottom
-        const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY) * 1.5 // Add some extra length to ensure it reaches
+        // Set the beam angle as a CSS variable
+        if (gameAreaRef.current) {
+          gameAreaRef.current.style.setProperty('--beam-angle', `${angle}deg`)
+        }
 
         setBeamStyle({ angle, length })
       }
@@ -291,11 +298,7 @@ export default function Game() {
   }, []); // Empty dependency array so it only runs once
 
   return (
-    <div 
-      ref={gameAreaRef} 
-      className={`${styles.gameArea} ${isWarningFlash ? styles.warningFlash : ''} ${isBeamActive ? styles.frameFlash : ''}`}
-      key={frameFlashKey} // Force animation restart
-    >
+    <div ref={gameAreaRef} className={`${styles.gameArea} ${isWarningFlash ? styles.warningFlash : ''} ${isBeamActive ? styles.frameFlash : ''}`}>
       <div className={styles.backgroundLayer}>
         <div className={styles.fogContainer}>
           <div className={styles.fogLayer1} />
@@ -303,64 +306,19 @@ export default function Game() {
           <div className={styles.fogLayer3} />
         </div>
       </div>
-      
-      {isImpactFlash && activeEyeStalk && (
-        <div 
-          className={styles.impactFlash} 
-          style={{
-            backgroundColor: `${activeEyeStalk.color}CC`,
-            boxShadow: `inset 0 0 50px ${activeEyeStalk.color}`
-          }}
-        />
-      )}
-      
-      {isGameOver && (
-        <div className={`${styles.gameOverOverlay} ${canRestart ? styles.showRestart : ''}`}>
-          <h1 className={styles.gameOverText}>Game Over</h1>
-          {canRestart && (
-            <p className={styles.retryText}>press space bar to retry</p>
-          )}
-        </div>
-      )}
-
-      {!isGameOver && (
-        <>
-          <div className={styles.scoreContainer}>
-            <div 
-              key={scoreAnimationKey}
-              className={styles.scoreContent}
-              style={{ animation: isScoreAnimating ? `${styles.scorePulse} 3s ease-out forwards` : 'none' }}
-              onAnimationEnd={() => setIsScoreAnimating(false)}
-            >
-              Blocked: {blockedCount}
-            </div>
-          </div>
-          <div 
-            key={animationKey}
-            className={styles.shieldIndicator}
-            style={{ animation: isShieldAnimating ? `${styles.shieldPulse} 3s ease-out forwards` : 'none' }}
-            onAnimationEnd={() => setIsShieldAnimating(false)}
-          >
-            Shield
-          </div>
-        </>
-      )}
-
-      <div className={styles.shadow}></div>
       <div ref={beholderRef} className={styles.beholder}>
         <img 
-          src={isGameOver ? "/images/beholder_closed.png" : "/images/beholder_blink_loop.gif"}
-          alt={isGameOver ? "Defeated Beholder" : "Blinking Beholder"}
-          width={300}
-          height={300}
+          src={isGameOver ? "/images/beholder_closed.png" : "/images/beholder_blink_loop.gif"} 
+          alt="Beholder" 
         />
-        {isBeamActive && activeEyeStalk && beamStyle && !isGameOver && (
-          <div className={styles.effectsContainer}>
+        {activeEyeStalk && isBeamActive && (
+          <>
             <div 
               className={styles.eyeGlow}
               style={{
                 top: activeEyeStalk.top,
                 left: activeEyeStalk.left,
+                background: `radial-gradient(circle, ${activeEyeStalk.color}dd 0%, ${activeEyeStalk.color}88 30%, ${activeEyeStalk.color}44 60%, transparent 100%)`
               }}
             />
             <div 
@@ -368,21 +326,38 @@ export default function Game() {
               style={{
                 top: activeEyeStalk.top,
                 left: activeEyeStalk.left,
-                transform: `rotate(${beamStyle.angle}deg)`,
               }}
             >
               <div 
-                className={styles.eyeBeam} 
-                style={{ 
-                  backgroundColor: activeEyeStalk.color,
-                  boxShadow: `0 0 10px ${activeEyeStalk.color}, 0 0 20px ${activeEyeStalk.color}`,
-                  height: `${beamStyle.length}px`,
-                }} 
+                className={styles.eyeBeam}
+                style={{
+                  height: `${beamStyle?.length}px`,
+                  background: activeEyeStalk.color
+                }}
               />
             </div>
-          </div>
+          </>
         )}
       </div>
+      <div className={styles.shadow} />
+      {isGameOver && (
+        <div className={styles.gameOverOverlay}>
+          <div className={styles.gameOverText}>Game Over</div>
+          {canRestart && <div className={styles.retryText}>Press SPACE to retry</div>}
+        </div>
+      )}
+      <div className={styles.scoreContainer}>
+        <div 
+          key={scoreAnimationKey}
+          className={`${styles.scoreContent} ${isScoreAnimating ? styles.scoreAnimate : ''}`}
+        >
+          Blocked: {blockedCount}
+        </div>
+      </div>
+      <div 
+        key={animationKey}
+        className={`${styles.shieldIndicator} ${isShieldAnimating ? styles.shieldActive : ''}`}
+      />
     </div>
   )
 } 
