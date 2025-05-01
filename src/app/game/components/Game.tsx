@@ -303,10 +303,54 @@ export default function Game() {
     root.style.setProperty('--fog3-start', `${Math.random() * 360}deg`);
   }, []); // Empty dependency array so it only runs once
 
+  // Add touch event handlers
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    event.preventDefault() // Prevent default touch behavior
+    if (!isSpacebarDown) {
+      setIsSpacebarDown(true)
+      
+      if (isGameOver && canRestart) {
+        // Reset all game states
+        setIsGameOver(false)
+        setCanRestart(false)
+        setBlockedCount(0)
+        setDifficultyLevel(0)
+        setIsWarningFlash(false)
+        setIsBeamActive(false)
+        setActiveEyeStalk(null)
+        setCanBlock(false)
+        setIsShieldAnimating(false)
+        setAnimationKey(prev => prev + 1)
+        setIsSpacebarDown(false)
+        setBeamStyle(null)
+        clearAllTimers()
+        scheduleNextBeam()
+        return
+      }
+
+      if (canBlock) {
+        setCanBlock(false)
+        setBlockedCount(prev => prev + 1)
+        setIsShieldAnimating(true)
+        setAnimationKey(prev => prev + 1)
+        setTimeout(() => {
+          setIsShieldAnimating(false)
+        }, 1000)
+      }
+    }
+  }, [isSpacebarDown, isGameOver, canRestart, canBlock, clearAllTimers, scheduleNextBeam])
+
+  const handleTouchEnd = useCallback((event: React.TouchEvent) => {
+    event.preventDefault()
+    setIsSpacebarDown(false)
+  }, [])
+
   return (
     <div 
       ref={gameAreaRef} 
       className={`${styles.gameArea} ${isWarningFlash ? styles.warningFlash : ''} ${isFrameFlashing ? styles.frameFlash : ''}`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div className={styles.backgroundLayer}>
         <div className={styles.fogContainer}>

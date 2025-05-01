@@ -188,6 +188,27 @@
   border-radius: 0.5rem;
 }
 
+.instructions p {
+  margin: 0.5rem 0;
+}
+
+.mobileNote {
+  font-size: 1.2rem;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .instructions {
+    font-size: 1.2rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .mobileNote {
+    font-size: 1rem;
+  }
+}
+
 .backgroundImage {
   position: absolute;
   top: 0;
