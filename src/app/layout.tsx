@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { UnifrakturMaguntia } from 'next/font/google';
 import { Inter } from 'next/font/google'
+import Header from './components/Header';
 
 const geistSans = Geist({
   subsets: ['latin'],
@@ -25,7 +26,7 @@ const medievalFont = UnifrakturMaguntia({
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Beholder's Realm",
+  title: "The Secret Lair",
   description: "A game of dodging and blocking eye beams",
   icons: [
     {
@@ -46,7 +47,10 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
       </head>
-      <body>{children}</body>
+      <body>
+        <Header />
+        {children}
+      </body>
     </html>
   );
 }
