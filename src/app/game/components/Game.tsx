@@ -15,16 +15,16 @@ const EYE_STALKS = [
 
 // Difficulty settings
 const DIFFICULTY_LEVELS = [
-  { beamDelay: { min: 1500, max: 8000 }, warningDuration: 200, floatSpeed: 6, impactWindow: 200 },   // Level 1
-  { beamDelay: { min: 1500, max: 6000 }, warningDuration: 150, floatSpeed: 5, impactWindow: 190 },   // Level 2
-  { beamDelay: { min: 1500, max: 5000 }, warningDuration: 100, floatSpeed: 4, impactWindow: 180 },   // Level 3
-  { beamDelay: { min: 1500, max: 4000 }, warningDuration: 75, floatSpeed: 3, impactWindow: 170 },    // Level 4
-  { beamDelay: { min: 1500, max: 3000 }, warningDuration: 50, floatSpeed: 2, impactWindow: 160 },    // Level 5
-  { beamDelay: { min: 1200, max: 2500 }, warningDuration: 45, floatSpeed: 1.8, impactWindow: 150 },  // Level 6
-  { beamDelay: { min: 1000, max: 2000 }, warningDuration: 40, floatSpeed: 1.6, impactWindow: 140 },  // Level 7
-  { beamDelay: { min: 800, max: 1800 }, warningDuration: 35, floatSpeed: 1.4, impactWindow: 135 },   // Level 8
-  { beamDelay: { min: 600, max: 1500 }, warningDuration: 30, floatSpeed: 1.2, impactWindow: 130 },   // Level 9
-  { beamDelay: { min: 500, max: 1200 }, warningDuration: 25, floatSpeed: 1, impactWindow: 125 },     // Level 10
+  { beamDelay: { min: 1500, max: 8000 }, warningDuration: 200, floatSpeed: 6, impactWindow: 200, shieldCooldown: 1400 },   // Level 1
+  { beamDelay: { min: 1500, max: 6000 }, warningDuration: 150, floatSpeed: 5, impactWindow: 190, shieldCooldown: 1400 },   // Level 2
+  { beamDelay: { min: 1500, max: 5000 }, warningDuration: 100, floatSpeed: 4, impactWindow: 180, shieldCooldown: 1400 },   // Level 3
+  { beamDelay: { min: 1500, max: 4000 }, warningDuration: 75, floatSpeed: 3, impactWindow: 170, shieldCooldown: 1400 },    // Level 4
+  { beamDelay: { min: 1500, max: 3000 }, warningDuration: 50, floatSpeed: 2, impactWindow: 160, shieldCooldown: 1400 },    // Level 5
+  { beamDelay: { min: 1200, max: 2500 }, warningDuration: 45, floatSpeed: 1.8, impactWindow: 150, shieldCooldown: 1100 },  // Level 6
+  { beamDelay: { min: 1000, max: 2000 }, warningDuration: 40, floatSpeed: 1.6, impactWindow: 140, shieldCooldown: 900 },  // Level 7
+  { beamDelay: { min: 800, max: 1800 }, warningDuration: 35, floatSpeed: 1.4, impactWindow: 135, shieldCooldown: 700 },   // Level 8
+  { beamDelay: { min: 600, max: 1500 }, warningDuration: 30, floatSpeed: 1.2, impactWindow: 130, shieldCooldown: 500 },   // Level 9
+  { beamDelay: { min: 500, max: 1200 }, warningDuration: 25, floatSpeed: 1, impactWindow: 125, shieldCooldown: 400 },     // Level 10
 ];
 
 // Add type definitions for Fullscreen API
@@ -75,6 +75,9 @@ export default function Game() {
 
   // Add new state for tracking if player's shield is active
   const shieldTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // The glow (shieldPulse in the CSS) fades slightly after the per-level shieldCooldown ends
+  const SHIELD_GLOW_LAG_MS = 300
+  const lastShieldRef = useRef<number>(0)
 
   // Add new state for controlling restart availability
   const [canRestart, setCanRestart] = useState<boolean>(false)
@@ -243,6 +246,7 @@ export default function Game() {
           setAnimationKey(prev => prev + 1)
           setIsSpacebarDown(false)  // Reset spacebar state too
           setBeamStyle(null)
+          lastShieldRef.current = 0
           clearAllTimers()
           if (shieldTimerRef.current) {
             clearTimeout(shieldTimerRef.current)
@@ -252,6 +256,12 @@ export default function Game() {
             scheduleNextBeam()
           }, 100)
         } else if (!isGameOver) {
+          const { shieldCooldown } = getCurrentDifficulty()
+          if (performance.now() - lastShieldRef.current < shieldCooldown) return
+          lastShieldRef.current = performance.now()
+          const glowMs = shieldCooldown + SHIELD_GLOW_LAG_MS
+          gameAreaRef.current?.style.setProperty('--shield-glow', `${glowMs}ms`)
+
           // Clear any existing shield timer
           if (shieldTimerRef.current) {
             clearTimeout(shieldTimerRef.current)
@@ -275,10 +285,10 @@ export default function Game() {
             }, 1000)
           }
 
-          // Set shield timer to deactivate after 1 second
+          // Set shield timer to deactivate after the glow fades
           shieldTimerRef.current = setTimeout(() => {
             setIsShieldAnimating(false)
-          }, 1000)
+          }, glowMs)
         }
       }
     }
@@ -300,7 +310,7 @@ export default function Game() {
         shieldTimerRef.current = null
       }
     }
-  }, [canBlock, isGameOver, canRestart, scheduleNextBeam, clearAllTimers, isSpacebarDown])
+  }, [canBlock, isGameOver, canRestart, scheduleNextBeam, clearAllTimers, isSpacebarDown, getCurrentDifficulty])
 
   // Continuously update beam position during animation
   useEffect(() => {
@@ -378,6 +388,7 @@ export default function Game() {
           setAnimationKey(prev => prev + 1)
           setIsSpacebarDown(false)
           setBeamStyle(null)
+          lastShieldRef.current = 0
           clearAllTimers()
           if (shieldTimerRef.current) {
             clearTimeout(shieldTimerRef.current)
@@ -390,6 +401,12 @@ export default function Game() {
         }
 
         if (!isGameOver) {
+          const { shieldCooldown } = getCurrentDifficulty()
+          if (performance.now() - lastShieldRef.current < shieldCooldown) return
+          lastShieldRef.current = performance.now()
+          const glowMs = shieldCooldown + SHIELD_GLOW_LAG_MS
+          gameAreaRef.current?.style.setProperty('--shield-glow', `${glowMs}ms`)
+
           // Clear any existing shield timer
           if (shieldTimerRef.current) {
             clearTimeout(shieldTimerRef.current)
@@ -413,10 +430,10 @@ export default function Game() {
             }, 1000)
           }
 
-          // Set shield timer to deactivate after 1 second
+          // Set shield timer to deactivate after the glow fades
           shieldTimerRef.current = setTimeout(() => {
             setIsShieldAnimating(false)
-          }, 1000)
+          }, glowMs)
         }
       }
     };
@@ -447,7 +464,7 @@ export default function Game() {
       gameArea.removeEventListener('touchend', touchEndHandler);
       gameArea.removeEventListener('touchmove', touchMoveHandler);
     };
-  }, [isSpacebarDown, isGameOver, canRestart, canBlock, clearAllTimers, scheduleNextBeam]);
+  }, [isSpacebarDown, isGameOver, canRestart, canBlock, clearAllTimers, scheduleNextBeam, getCurrentDifficulty]);
 
   const toggleFullscreen = async () => {
     if (!gameCanvasRef.current) return;
